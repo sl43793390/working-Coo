@@ -107,41 +107,6 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
 - It is updated manually once per release and imported by the deployer; the application **does not** run automatic migrations on startup
 - Adding a menu = inserts into the three menu tables in `institutions.sql`; the component-class column of a menu row points to its Vaadin component
 
-## Project Layout
-
-```
-src/main/java/com/sl
-├── Application.java          # entry point (@Theme mytodo / Lumo LIGHT, @EnableScheduling)
-├── app/
-│   ├── appLayout/            # main layout & left navigation
-│   ├── views/                # views (LoginView, AppLayoutAccordionView main shell)
-│   ├── component/util/       # shared component utilities (ComFactory, TabsUtil, ComponentUtil)
-│   └── controller/           # backend endpoints (FileController for downloads)
-├── project/                  # projects (create, statistics, recycle bin, documents, milestones, members)
-├── task/                     # tasks (create, update, detail, comments, kanban, Gantt, burndown, Excel)
-├── user/                     # user & role management (RBAC, role-permission tree)
-├── schedule/                 # schedule (day/week/month views, to-do list panel, drag to reschedule)
-├── search/                   # global search
-├── notify/                   # notification bell + reminder scheduler (@Scheduled)
-├── security/                 # password hashing, login throttling, Shiro credentials matcher
-├── aop/                      # @AuditLog operation-history aspect
-├── service/                  # service layer (TaskProcess, ProjectProcess, ProjectRoleService, ...)
-├── mapper/                   # MyBatis mapper interfaces
-├── entity/                   # database entities
-├── bo/                       # business objects (TreeNode, BurnDownSeries, SearchHit, ...)
-├── config/                   # configuration (Shiro, MyBatis, traceId filter, StorageProperties)
-└── util/                     # utilities (Util, DateInfo, ...)
-
-src/main/resources
-├── application.properties    # main config (port /work, MyBatis-Plus, Actuator, file storage)
-├── application-dev.properties# dev datasource & connection pool
-├── institutions.sql          # single authoritative database script
-├── log4j2-spring.xml         # logging config (traceId output)
-└── mapping/*.xml             # MyBatis mapper XML
-
-frontend/themes/mytodo/       # Vaadin theme (styles.css + component-level CSS)
-```
-
 Uploaded files are stored under `${user.home}/.workingcoo/storage` by default; override with the `APP_STORAGE_DIR` environment variable (set to `/app/storage` in the Docker deployment).
 
 ## Tests
@@ -172,6 +137,3 @@ Tests touching EasyExcel need `--add-opens`, already configured in surefire's `a
 - **Startup hangs at HikariCP**: MySQL unreachable — an environment issue, not a code issue
 - **traceId**: `X-Trace-Id` flows through log4j2 logs; grep the value from the response header inside `logs/` to correlate a request
 
-## Roadmap
-
-See [readMe2.md](readMe2.md).

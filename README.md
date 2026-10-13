@@ -106,41 +106,6 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
 - 每次发布前手工更新一次，由部署人员按需导入；应用启动时**不做自动迁移**
 - 新增菜单 = 在 `institutions.sql` 的菜单三张表补数据，菜单记录的组件类名字段指向对应的 Vaadin 组件
 
-## 项目结构
-
-```
-src/main/java/com/sl
-├── Application.java          # 启动类（@Theme mytodo / Lumo LIGHT，@EnableScheduling）
-├── app/
-│   ├── appLayout/            # 主布局与左侧菜单（AppLayoutAccordion 等）
-│   ├── views/                # 页面视图（LoginView 登录、AppLayoutAccordionView 主框架）
-│   ├── component/util/       # 通用组件工具（ComFactory、TabsUtil、ComponentUtil 等）
-│   └── controller/           # 后端接口（FileController 文件下载）
-├── project/                  # 项目管理（创建、统计、回收站、文档、里程碑、成员）
-├── task/                     # 任务管理（创建、更新、详情、评论、看板、甘特、燃尽、Excel）
-├── user/                     # 用户/角色管理（RBAC，角色-权限树）
-├── schedule/                 # 日程（日/周/月视图、待办清单面板、拖拽改期）
-├── search/                   # 全局搜索
-├── notify/                   # 通知铃铛 + 提醒调度器（@Scheduled）
-├── security/                 # 密码散列、登录限流、Shiro 凭证匹配器
-├── aop/                      # @AuditLog 操作历史切面
-├── service/                  # Service 层（TaskProcess、ProjectProcess、ProjectRoleService 等）
-├── mapper/                   # MyBatis Mapper 接口
-├── entity/                   # 数据库实体
-├── bo/                       # 业务对象（TreeNode、BurnDownSeries、SearchHit 等）
-├── config/                   # 配置类（Shiro、MyBatis、traceId 过滤器、StorageProperties）
-└── util/                     # 工具类（Util、DateInfo 等）
-
-src/main/resources
-├── application.properties    # 主配置（端口 /work、MyBatis-Plus、Actuator、文件存储）
-├── application-dev.properties# dev 环境数据源与连接池配置
-├── institutions.sql          # 数据库唯一权威脚本
-├── log4j2-spring.xml         # 日志配置（含 traceId 输出）
-└── mapping/*.xml             # MyBatis Mapper XML
-
-frontend/themes/mytodo/       # Vaadin 主题（styles.css + 组件级 CSS）
-```
-
 文件上传默认存储在 `${user.home}/.workingcoo/storage`，可用环境变量 `APP_STORAGE_DIR` 覆盖（Docker 部署里指向 `/app/storage`）。
 
 ## 测试
@@ -171,6 +136,3 @@ mvn test
 - **启动卡在 HikariCP**：MySQL 不可达，属环境问题而非代码问题
 - **traceId 排查**：`X-Trace-Id` 贯穿 log4j2 日志，拿响应头里的 traceId 去 `logs/` 目录 grep 即可串联一次请求
 
-## Roadmap
-
-参见 [readMe2.md](readMe2.md)。
