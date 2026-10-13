@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.TaskDependencyMapper" >
+
+  <resultMap id="BaseResultMap" type="com.sl.entity.TaskDependency" >
+    <id column="ID_DEPENDENCY" property="idDependency" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="ID_TASK" property="idTask" jdbcType="VARCHAR" />
+    <result column="ID_PRE_TASK" property="idPreTask" jdbcType="VARCHAR" />
+    <result column="NBR_LAG_DAY" property="nbrLagDay" jdbcType="INTEGER" />
+    <result column="DT_CREATE" property="dtCreate" jdbcType="TIMESTAMP" />
+    <result column="ID_CREATE_USER" property="idCreateUser" jdbcType="VARCHAR" />
+    <result column="NAME_PRE_TASK" property="namePreTask" jdbcType="VARCHAR" />
+    <result column="NAME_TASK" property="nameTask" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    d.ID_DEPENDENCY, d.ID_PROJECT, d.ID_TASK, d.ID_PRE_TASK, d.NBR_LAG_DAY, d.DT_CREATE,
+    d.ID_CREATE_USER, pt.NAME_TASK AS NAME_PRE_TASK, ct.NAME_TASK AS NAME_TASK
+  </sql>
+
+  <sql id="Join_Task_Name" >
+    from task_dependency d
+    left join task pt on pt.ID_TASK = d.ID_PRE_TASK
+    left join task ct on ct.ID_TASK = d.ID_TASK
+  </sql>
+
+  <insert id="insert" parameterType="com.sl.entity.TaskDependency" >
+    insert into task_dependency (ID_DEPENDENCY, ID_PROJECT, ID_TASK, ID_PRE_TASK,
+      NBR_LAG_DAY, DT_CREATE, ID_CREATE_USER)
+    values (#{idDependency,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}, #{idTask,jdbcType=VARCHAR},
+      #{idPreTask,jdbcType=VARCHAR}, #{nbrLagDay,jdbcType=INTEGER}, #{dtCreate,jdbcType=TIMESTAMP},
+      #{idCreateUser,jdbcType=VARCHAR})
+  </insert>
+
+  <select id="selectByTask" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    <include refid="Join_Task_Name" />
+    where d.ID_TASK = #{idTask,jdbcType=VARCHAR}
+    order by d.DT_CREATE
+  </select>
+
+  <select id="selectByPreTask" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    <include refid="Join_Task_Name" />
+    where d.ID_PRE_TASK = #{idPreTask,jdbcType=VARCHAR}
+    order by d.DT_CREATE
+  </select>
+
+  <select id="selectByProject" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    <include refid="Join_Task_Name" />
+    where d.ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+    order by d.DT_CREATE
+  </select>
+
+  <select id="countPair" resultType="long" parameterType="map" >
+    select count(1) from task_dependency
+    where ID_TASK = #{idTask,jdbcType=VARCHAR} and ID_PRE_TASK = #{idPreTask,jdbcType=VARCHAR}
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from task_dependency
+    where ID_DEPENDENCY = #{idDependency,jdbcType=VARCHAR}
+  </delete>
+
+  <delete id="deleteByTask" parameterType="map" >
+    delete from task_dependency
+    where ID_TASK = #{idTask,jdbcType=VARCHAR} or ID_PRE_TASK = #{idTask,jdbcType=VARCHAR}
+  </delete>
+
+</mapper>

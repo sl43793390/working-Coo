@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.NotificationMapper" >
+
+  <resultMap id="BaseResultMap" type="com.sl.entity.Notification" >
+    <id column="ID_NOTIFICATION" property="idNotification" jdbcType="VARCHAR" />
+    <result column="ID_USER" property="idUser" jdbcType="VARCHAR" />
+    <result column="CD_TYPE" property="cdType" jdbcType="VARCHAR" />
+    <result column="ID_BIZ" property="idBiz" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="CD_TITLE" property="cdTitle" jdbcType="VARCHAR" />
+    <result column="CD_CONTENT" property="cdContent" jdbcType="VARCHAR" />
+    <result column="FLAG_READ" property="flagRead" jdbcType="CHAR" />
+    <result column="DT_CREATE" property="dtCreate" jdbcType="TIMESTAMP" />
+    <result column="DT_READ" property="dtRead" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    ID_NOTIFICATION, ID_USER, CD_TYPE, ID_BIZ, ID_PROJECT, CD_TITLE, CD_CONTENT,
+    FLAG_READ, DT_CREATE, DT_READ
+  </sql>
+
+  <insert id="insert" parameterType="com.sl.entity.Notification" >
+    insert into notification (ID_NOTIFICATION, ID_USER, CD_TYPE, ID_BIZ, ID_PROJECT,
+      CD_TITLE, CD_CONTENT, FLAG_READ, DT_CREATE, DT_READ)
+    values (#{idNotification,jdbcType=VARCHAR}, #{idUser,jdbcType=VARCHAR}, #{cdType,jdbcType=VARCHAR},
+      #{idBiz,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}, #{cdTitle,jdbcType=VARCHAR},
+      #{cdContent,jdbcType=VARCHAR}, #{flagRead,jdbcType=CHAR}, #{dtCreate,jdbcType=TIMESTAMP},
+      #{dtRead,jdbcType=TIMESTAMP})
+  </insert>
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select
+    <include refid="Base_Column_List" />
+    from notification
+    where ID_NOTIFICATION = #{idNotification,jdbcType=VARCHAR}
+  </select>
+
+  <!-- 未读排在前面：flagRead 为空表示不做过滤（查全部） -->
+  <select id="selectByUser" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    from notification
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+    <if test="flagRead != null and flagRead != ''">
+      and FLAG_READ = #{flagRead,jdbcType=CHAR}
+    </if>
+    order by (case when FLAG_READ = 'N' then 0 else 1 end), DT_CREATE desc
+    limit #{offset}, #{limit}
+  </select>
+
+  <select id="countByUser" resultType="long" parameterType="map" >
+    select count(1) from notification
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+    <if test="flagRead != null and flagRead != ''">
+      and FLAG_READ = #{flagRead,jdbcType=CHAR}
+    </if>
+  </select>
+
+  <select id="countUnread" resultType="long" parameterType="map" >
+    select count(1) from notification
+    where ID_USER = #{idUser,jdbcType=VARCHAR} and FLAG_READ = 'N'
+  </select>
+
+  <!-- 判重不看已读未读：已读之后再扫到同一条记录时不能重新插一条，
+       否则用户点掉红点后，下一次定时扫描又把红点亮起来 -->
+  <select id="countUnreadBiz" resultType="long" parameterType="map" >
+    select count(1) from notification
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+      and CD_TYPE = #{cdType,jdbcType=VARCHAR}
+      and ID_BIZ = #{idBiz,jdbcType=VARCHAR}
+  </select>
+
+  <update id="markRead" parameterType="map" >
+    update notification
+    set FLAG_READ = 'Y', DT_READ = now()
+    where ID_NOTIFICATION = #{idNotification,jdbcType=VARCHAR}
+      and ID_USER = #{idUser,jdbcType=VARCHAR}
+  </update>
+
+  <update id="markAllRead" parameterType="map" >
+    update notification
+    set FLAG_READ = 'Y', DT_READ = now()
+    where ID_USER = #{idUser,jdbcType=VARCHAR} and FLAG_READ = 'N'
+  </update>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from notification
+    where ID_NOTIFICATION = #{idNotification,jdbcType=VARCHAR}
+  </delete>
+
+  <delete id="deleteByProject" parameterType="java.lang.String" >
+    delete from notification
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+  </delete>
+
+</mapper>

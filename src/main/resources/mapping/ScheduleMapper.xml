@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.ScheduleMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.Schedule" >
+    <id column="ID_USER" property="idUser" jdbcType="VARCHAR" />
+    <id column="ID_SCHEDULE" property="idSchedule" jdbcType="VARCHAR" />
+    <result column="DT_SCHEDULE" property="dtSchedule" jdbcType="TIMESTAMP" />
+    <result column="DT_END" property="dtEnd" jdbcType="TIMESTAMP" />
+    <result column="CD_NATURE" property="cdNature" jdbcType="VARCHAR" />
+    <result column="NAME_SCHEDULE" property="nameSchedule" jdbcType="VARCHAR" />
+    <result column="COMMENT" property="comment" jdbcType="VARCHAR" />
+    <result column="PARTICIPATING_USER" property="participatingUser" jdbcType="VARCHAR" />
+    <result column="NBR_REMIND_MINUTES" property="nbrRemindMinutes" jdbcType="INTEGER" />
+    <result column="FLAG_REMINDED" property="flagReminded" jdbcType="CHAR" />
+    <result column="TIMESTAMP" property="timestamp" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_USER, ID_SCHEDULE, DT_SCHEDULE, DT_END, CD_NATURE, NAME_SCHEDULE, COMMENT,
+    PARTICIPATING_USER, NBR_REMIND_MINUTES, FLAG_REMINDED, TIMESTAMP
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.ScheduleExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from schedule
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="map" >
+    select 
+    <include refid="Base_Column_List" />
+    from schedule
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+      and ID_SCHEDULE = #{idSchedule,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="map" >
+    delete from schedule
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+      and ID_SCHEDULE = #{idSchedule,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.ScheduleExample" >
+    delete from schedule
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.Schedule" >
+    insert into schedule (ID_USER, ID_SCHEDULE, DT_SCHEDULE, 
+      DT_END, CD_NATURE, NAME_SCHEDULE, 
+      COMMENT, PARTICIPATING_USER, NBR_REMIND_MINUTES, 
+      FLAG_REMINDED, TIMESTAMP)
+    values (#{idUser,jdbcType=VARCHAR}, #{idSchedule,jdbcType=VARCHAR}, #{dtSchedule,jdbcType=TIMESTAMP}, 
+      #{dtEnd,jdbcType=TIMESTAMP}, #{cdNature,jdbcType=VARCHAR}, #{nameSchedule,jdbcType=VARCHAR}, 
+      #{comment,jdbcType=VARCHAR}, #{participatingUser,jdbcType=VARCHAR}, #{nbrRemindMinutes,jdbcType=INTEGER}, 
+      #{flagReminded,jdbcType=CHAR}, #{timestamp,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.Schedule" >
+    insert into schedule
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="idUser != null" >
+        ID_USER,
+      </if>
+      <if test="idSchedule != null" >
+        ID_SCHEDULE,
+      </if>
+      <if test="dtSchedule != null" >
+        DT_SCHEDULE,
+      </if>
+      <if test="dtEnd != null" >
+        DT_END,
+      </if>
+      <if test="cdNature != null" >
+        CD_NATURE,
+      </if>
+      <if test="nameSchedule != null" >
+        NAME_SCHEDULE,
+      </if>
+      <if test="comment != null" >
+        COMMENT,
+      </if>
+      <if test="participatingUser != null" >
+        PARTICIPATING_USER,
+      </if>
+      <if test="nbrRemindMinutes != null" >
+        NBR_REMIND_MINUTES,
+      </if>
+      <if test="flagReminded != null" >
+        FLAG_REMINDED,
+      </if>
+      <if test="timestamp != null" >
+        TIMESTAMP,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="idUser != null" >
+        #{idUser,jdbcType=VARCHAR},
+      </if>
+      <if test="idSchedule != null" >
+        #{idSchedule,jdbcType=VARCHAR},
+      </if>
+      <if test="dtSchedule != null" >
+        #{dtSchedule,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dtEnd != null" >
+        #{dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="cdNature != null" >
+        #{cdNature,jdbcType=VARCHAR},
+      </if>
+      <if test="nameSchedule != null" >
+        #{nameSchedule,jdbcType=VARCHAR},
+      </if>
+      <if test="comment != null" >
+        #{comment,jdbcType=VARCHAR},
+      </if>
+      <if test="participatingUser != null" >
+        #{participatingUser,jdbcType=VARCHAR},
+      </if>
+      <if test="nbrRemindMinutes != null" >
+        #{nbrRemindMinutes,jdbcType=INTEGER},
+      </if>
+      <if test="flagReminded != null" >
+        #{flagReminded,jdbcType=CHAR},
+      </if>
+      <if test="timestamp != null" >
+        #{timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update schedule
+    <set >
+      <if test="record.idUser != null" >
+        ID_USER = #{record.idUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idSchedule != null" >
+        ID_SCHEDULE = #{record.idSchedule,jdbcType=VARCHAR},
+      </if>
+      <if test="record.dtSchedule != null" >
+        DT_SCHEDULE = #{record.dtSchedule,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.dtEnd != null" >
+        DT_END = #{record.dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.cdNature != null" >
+        CD_NATURE = #{record.cdNature,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameSchedule != null" >
+        NAME_SCHEDULE = #{record.nameSchedule,jdbcType=VARCHAR},
+      </if>
+      <if test="record.comment != null" >
+        COMMENT = #{record.comment,jdbcType=VARCHAR},
+      </if>
+      <if test="record.participatingUser != null" >
+        PARTICIPATING_USER = #{record.participatingUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nbrRemindMinutes != null" >
+        NBR_REMIND_MINUTES = #{record.nbrRemindMinutes,jdbcType=INTEGER},
+      </if>
+      <if test="record.flagReminded != null" >
+        FLAG_REMINDED = #{record.flagReminded,jdbcType=CHAR},
+      </if>
+      <if test="record.timestamp != null" >
+        TIMESTAMP = #{record.timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update schedule
+    set ID_USER = #{record.idUser,jdbcType=VARCHAR},
+      ID_SCHEDULE = #{record.idSchedule,jdbcType=VARCHAR},
+      DT_SCHEDULE = #{record.dtSchedule,jdbcType=TIMESTAMP},
+      DT_END = #{record.dtEnd,jdbcType=TIMESTAMP},
+      CD_NATURE = #{record.cdNature,jdbcType=VARCHAR},
+      NAME_SCHEDULE = #{record.nameSchedule,jdbcType=VARCHAR},
+      COMMENT = #{record.comment,jdbcType=VARCHAR},
+      PARTICIPATING_USER = #{record.participatingUser,jdbcType=VARCHAR},
+      NBR_REMIND_MINUTES = #{record.nbrRemindMinutes,jdbcType=INTEGER},
+      FLAG_REMINDED = #{record.flagReminded,jdbcType=CHAR},
+      TIMESTAMP = #{record.timestamp,jdbcType=TIMESTAMP}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.Schedule" >
+    update schedule
+    <set >
+      <if test="dtSchedule != null" >
+        DT_SCHEDULE = #{dtSchedule,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dtEnd != null" >
+        DT_END = #{dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="cdNature != null" >
+        CD_NATURE = #{cdNature,jdbcType=VARCHAR},
+      </if>
+      <if test="nameSchedule != null" >
+        NAME_SCHEDULE = #{nameSchedule,jdbcType=VARCHAR},
+      </if>
+      <if test="comment != null" >
+        COMMENT = #{comment,jdbcType=VARCHAR},
+      </if>
+      <if test="participatingUser != null" >
+        PARTICIPATING_USER = #{participatingUser,jdbcType=VARCHAR},
+      </if>
+      <if test="nbrRemindMinutes != null" >
+        NBR_REMIND_MINUTES = #{nbrRemindMinutes,jdbcType=INTEGER},
+      </if>
+      <if test="flagReminded != null" >
+        FLAG_REMINDED = #{flagReminded,jdbcType=CHAR},
+      </if>
+      <if test="timestamp != null" >
+        TIMESTAMP = #{timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+      and ID_SCHEDULE = #{idSchedule,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.Schedule" >
+    update schedule
+    set DT_SCHEDULE = #{dtSchedule,jdbcType=TIMESTAMP},
+      DT_END = #{dtEnd,jdbcType=TIMESTAMP},
+      CD_NATURE = #{cdNature,jdbcType=VARCHAR},
+      NAME_SCHEDULE = #{nameSchedule,jdbcType=VARCHAR},
+      COMMENT = #{comment,jdbcType=VARCHAR},
+      PARTICIPATING_USER = #{participatingUser,jdbcType=VARCHAR},
+      NBR_REMIND_MINUTES = #{nbrRemindMinutes,jdbcType=INTEGER},
+      FLAG_REMINDED = #{flagReminded,jdbcType=CHAR},
+      TIMESTAMP = #{timestamp,jdbcType=TIMESTAMP}
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+      and ID_SCHEDULE = #{idSchedule,jdbcType=VARCHAR}
+  </update>
+  <!-- T2-11：编辑日程专用全字段更新。null 字段会写入（可清空 DT_END/CD_NATURE/NBR_REMIND_MINUTES），
+       但不更新 TIMESTAMP 列，保留 ON UPDATE CURRENT_TIMESTAMP 的自动刷新 -->
+  <update id="updateScheduleEditable" parameterType="com.sl.entity.Schedule" >
+    update schedule
+    set DT_SCHEDULE = #{dtSchedule,jdbcType=TIMESTAMP},
+      DT_END = #{dtEnd,jdbcType=TIMESTAMP},
+      CD_NATURE = #{cdNature,jdbcType=VARCHAR},
+      NAME_SCHEDULE = #{nameSchedule,jdbcType=VARCHAR},
+      COMMENT = #{comment,jdbcType=VARCHAR},
+      PARTICIPATING_USER = #{participatingUser,jdbcType=VARCHAR},
+      NBR_REMIND_MINUTES = #{nbrRemindMinutes,jdbcType=INTEGER},
+      FLAG_REMINDED = #{flagReminded,jdbcType=CHAR}
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+      and ID_SCHEDULE = #{idSchedule,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.Schedule" >
+    insert into schedule
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      ID_USER,ID_SCHEDULE,DT_SCHEDULE,DT_END,CD_NATURE,NAME_SCHEDULE,COMMENT,
+      PARTICIPATING_USER,NBR_REMIND_MINUTES,FLAG_REMINDED,TIMESTAMP,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idUser,jdbcType=VARCHAR},#{item.idSchedule,jdbcType=VARCHAR},#{item.dtSchedule,jdbcType=TIMESTAMP},#{item.dtEnd,jdbcType=TIMESTAMP},#{item.cdNature,jdbcType=VARCHAR},#{item.nameSchedule,jdbcType=VARCHAR},#{item.comment,jdbcType=VARCHAR},#{item.participatingUser,jdbcType=VARCHAR},#{item.nbrRemindMinutes,jdbcType=INTEGER},#{item.flagReminded,jdbcType=CHAR},#{item.timestamp,jdbcType=TIMESTAMP},
+      </trim>
+      )
+    </foreach>
+  </insert>
+
+  <!-- T2-11：待提醒的日程。起始时间落在 (now, now + 提前量] 且还没提醒过。 -->
+  <select id="selectPendingRemind" resultMap="BaseResultMap" >
+    select
+    <include refid="Base_Column_List" />
+    from schedule
+    where FLAG_REMINDED = 'N'
+      and NBR_REMIND_MINUTES is not null
+      and NBR_REMIND_MINUTES &gt; 0
+      and DT_SCHEDULE &gt; #{now,jdbcType=TIMESTAMP}
+      and DT_SCHEDULE &lt;= date_add(#{now,jdbcType=TIMESTAMP}, interval NBR_REMIND_MINUTES minute)
+  </select>
+
+  <!-- T2-11：把某条日程标记为已提醒。 -->
+  <update id="markReminded" >
+    update schedule set FLAG_REMINDED = 'Y'
+    where ID_USER = #{idUser,jdbcType=VARCHAR}
+      and ID_SCHEDULE = #{idSchedule,jdbcType=VARCHAR}
+  </update>
+</mapper>

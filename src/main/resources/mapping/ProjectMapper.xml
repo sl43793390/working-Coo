@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.ProjectMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.Project" >
+    <id column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="ID_INSTITUTION" property="idInstitution" jdbcType="VARCHAR" />
+    <result column="NAME_PROJECT" property="nameProject" jdbcType="VARCHAR" />
+    <result column="CD_STATUS" property="cdStatus" jdbcType="VARCHAR" />
+    <result column="CD_PRIOR" property="cdPrior" jdbcType="VARCHAR" />
+    <result column="PCT_COMPLETE" property="pctComplete" jdbcType="DECIMAL" />
+    <result column="PCT_OVERDUE" property="pctOverdue" jdbcType="DECIMAL" />
+    <result column="DT_START" property="dtStart" jdbcType="DATE" />
+    <result column="DT_END" property="dtEnd" jdbcType="DATE" />
+    <result column="DT_CREATE" property="dtCreate" jdbcType="DATE" />
+    <result column="CD_CREATE_USER" property="cdCreateUser" jdbcType="VARCHAR" />
+    <result column="CD_COMMENT" property="cdComment" jdbcType="VARCHAR" />
+    <result column="FLAG_PRIVATE" property="flagPrivate" jdbcType="CHAR" />
+    <result column="FLAG_DELETE" property="flagDelete" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_PROJECT, ID_INSTITUTION, NAME_PROJECT, CD_STATUS, CD_PRIOR, PCT_COMPLETE, PCT_OVERDUE, 
+    DT_START, DT_END, DT_CREATE, CD_CREATE_USER, CD_COMMENT, FLAG_PRIVATE, FLAG_DELETE
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.ProjectExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from projects
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from projects
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+  </select>
+  <!-- 普通用户条件片段：join project_user 会产生重复行，故统一用 DISTINCT -->
+  <sql id="Project_User_Condition" >
+	<if test="institution != null">
+		and a.ID_INSTITUTION = #{institution,jdbcType=VARCHAR}
+	</if>
+	<if test="pName != null">
+		and a.NAME_PROJECT like '%${pName}%'
+	</if>
+	<if test="prior != null">
+		and a.CD_PRIOR = #{prior,jdbcType=VARCHAR}
+	</if>
+  </sql>
+  <!-- 管理员条件片段 -->
+  <sql id="Project_Admin_Condition" >
+	<if test="institution != null">
+		ID_INSTITUTION = #{institution,jdbcType=VARCHAR} and FLAG_DELETE <![CDATA[<>]]> 'Y'
+	</if>
+	<if test="pName != null">
+		and NAME_PROJECT like '%${pName}%'
+	</if>
+	<if test="prior != null">
+		and CD_PRIOR = #{prior,jdbcType=VARCHAR}
+	</if>
+  </sql>
+
+  <select id="selectByCondition" resultMap="BaseResultMap" parameterType="map" >
+  SELECT DISTINCT a.* FROM projects a, project_user b
+WHERE	a.ID_PROJECT = b.ID_PROJECT and a.FLAG_DELETE <![CDATA[<>]]> 'Y'
+AND a.ID_PROJECT IN (SELECT	ID_PROJECT 	FROM project_user
+	WHERE
+	ID_USER = #{idUser,jdbcType=VARCHAR})
+	<include refid="Project_User_Condition" />
+  </select>
+  <!-- 分页版本：供 Grid 懒加载使用，只取当前页 -->
+  <select id="selectByConditionPage" resultMap="BaseResultMap" parameterType="map" >
+  SELECT DISTINCT a.* FROM projects a, project_user b
+WHERE	a.ID_PROJECT = b.ID_PROJECT and a.FLAG_DELETE <![CDATA[<>]]> 'Y'
+AND a.ID_PROJECT IN (SELECT	ID_PROJECT 	FROM project_user
+	WHERE
+	ID_USER = #{idUser,jdbcType=VARCHAR})
+	<include refid="Project_User_Condition" />
+	LIMIT #{offset,jdbcType=INTEGER}, #{limit,jdbcType=INTEGER}
+  </select>
+  <select id="countByCondition" resultType="long" parameterType="map" >
+  SELECT COUNT(DISTINCT a.ID_PROJECT) FROM projects a, project_user b
+WHERE	a.ID_PROJECT = b.ID_PROJECT and a.FLAG_DELETE <![CDATA[<>]]> 'Y'
+AND a.ID_PROJECT IN (SELECT	ID_PROJECT 	FROM project_user
+	WHERE
+	ID_USER = #{idUser,jdbcType=VARCHAR})
+	<include refid="Project_User_Condition" />
+  </select>
+
+  <select id="selectByConditionForadmin" resultMap="BaseResultMap" parameterType="map" >
+  SELECT
+<include refid="Base_Column_List" />
+ FROM projects WHERE
+	<include refid="Project_Admin_Condition" />
+  </select>
+  <select id="selectByConditionForadminPage" resultMap="BaseResultMap" parameterType="map" >
+  SELECT
+<include refid="Base_Column_List" />
+ FROM projects WHERE
+	<include refid="Project_Admin_Condition" />
+	LIMIT #{offset,jdbcType=INTEGER}, #{limit,jdbcType=INTEGER}
+  </select>
+  <select id="countByConditionForadmin" resultType="long" parameterType="map" >
+  SELECT COUNT(1) FROM projects WHERE
+	<include refid="Project_Admin_Condition" />
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from projects
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.ProjectExample" >
+    delete from projects
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.Project" >
+    insert into projects (ID_PROJECT, ID_INSTITUTION, NAME_PROJECT, 
+      CD_STATUS, CD_PRIOR, PCT_COMPLETE, 
+      PCT_OVERDUE, DT_START,DT_END, DT_CREATE, 
+      CD_CREATE_USER, CD_COMMENT, FLAG_PRIVATE, 
+      FLAG_DELETE)
+    values (#{idProject,jdbcType=VARCHAR}, #{idInstitution,jdbcType=VARCHAR}, #{nameProject,jdbcType=VARCHAR}, 
+      #{cdStatus,jdbcType=VARCHAR}, #{cdPrior,jdbcType=VARCHAR}, #{pctComplete,jdbcType=DECIMAL}, 
+      #{pctOverdue,jdbcType=DECIMAL}, #{dtStart,jdbcType=DATE}, #{dtEnd,jdbcType=DATE},#{dtCreate,jdbcType=DATE}, 
+      #{cdCreateUser,jdbcType=VARCHAR}, #{cdComment,jdbcType=VARCHAR}, #{flagPrivate,jdbcType=CHAR}, 
+      #{flagDelete,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.Project" >
+    insert into projects
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="idProject != null" >
+        ID_PROJECT,
+      </if>
+      <if test="idInstitution != null" >
+        ID_INSTITUTION,
+      </if>
+      <if test="nameProject != null" >
+        NAME_PROJECT,
+      </if>
+      <if test="cdStatus != null" >
+        CD_STATUS,
+      </if>
+      <if test="cdPrior != null" >
+        CD_PRIOR,
+      </if>
+      <if test="pctComplete != null" >
+        PCT_COMPLETE,
+      </if>
+      <if test="pctOverdue != null" >
+        PCT_OVERDUE,
+      </if>
+      <if test="dtStart != null" >
+        DT_START,
+      </if>
+      <if test="dtEnd != null" >
+        DT_END,
+      </if>
+      <if test="dtCreate != null" >
+        DT_CREATE,
+      </if>
+      <if test="cdCreateUser != null" >
+        CD_CREATE_USER,
+      </if>
+      <if test="cdComment != null" >
+        CD_COMMENT,
+      </if>
+      <if test="flagPrivate != null" >
+        FLAG_PRIVATE,
+      </if>
+      <if test="flagDelete != null" >
+        FLAG_DELETE,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="idProject != null" >
+        #{idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="idInstitution != null" >
+        #{idInstitution,jdbcType=VARCHAR},
+      </if>
+      <if test="nameProject != null" >
+        #{nameProject,jdbcType=VARCHAR},
+      </if>
+      <if test="cdStatus != null" >
+        #{cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="cdPrior != null" >
+        #{cdPrior,jdbcType=VARCHAR},
+      </if>
+      <if test="pctComplete != null" >
+        #{pctComplete,jdbcType=DECIMAL},
+      </if>
+      <if test="pctOverdue != null" >
+        #{pctOverdue,jdbcType=DECIMAL},
+      </if>
+      <if test="dtStart != null" >
+        #{dtStart,jdbcType=DATE},
+      </if>
+      <if test="dtEnd != null" >
+        #{dtEnd,jdbcType=DATE},
+      </if>
+      <if test="dtCreate != null" >
+        #{dtCreate,jdbcType=DATE},
+      </if>
+      <if test="cdCreateUser != null" >
+        #{cdCreateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="cdComment != null" >
+        #{cdComment,jdbcType=VARCHAR},
+      </if>
+      <if test="flagPrivate != null" >
+        #{flagPrivate,jdbcType=CHAR},
+      </if>
+      <if test="flagDelete != null" >
+        #{flagDelete,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update projects
+    <set >
+      <if test="record.idProject != null" >
+        ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idInstitution != null" >
+        ID_INSTITUTION = #{record.idInstitution,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameProject != null" >
+        NAME_PROJECT = #{record.nameProject,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdStatus != null" >
+        CD_STATUS = #{record.cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdPrior != null" >
+        CD_PRIOR = #{record.cdPrior,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pctComplete != null" >
+        PCT_COMPLETE = #{record.pctComplete,jdbcType=DECIMAL},
+      </if>
+      <if test="record.pctOverdue != null" >
+        PCT_OVERDUE = #{record.pctOverdue,jdbcType=DECIMAL},
+      </if>
+      <if test="record.dtStart != null" >
+        DT_START = #{record.dtStart,jdbcType=DATE},
+      </if>
+      <if test="record.dtEnd != null" >
+        DT_START = #{record.dtEnd,jdbcType=DATE},
+      </if>
+      <if test="record.dtCreate != null" >
+        DT_CREATE = #{record.dtCreate,jdbcType=DATE},
+      </if>
+      <if test="record.cdCreateUser != null" >
+        CD_CREATE_USER = #{record.cdCreateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdComment != null" >
+        CD_COMMENT = #{record.cdComment,jdbcType=VARCHAR},
+      </if>
+      <if test="record.flagPrivate != null" >
+        FLAG_PRIVATE = #{record.flagPrivate,jdbcType=CHAR},
+      </if>
+      <if test="record.flagDelete != null" >
+        FLAG_DELETE = #{record.flagDelete,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update projects
+    set ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      ID_INSTITUTION = #{record.idInstitution,jdbcType=VARCHAR},
+      NAME_PROJECT = #{record.nameProject,jdbcType=VARCHAR},
+      CD_STATUS = #{record.cdStatus,jdbcType=VARCHAR},
+      CD_PRIOR = #{record.cdPrior,jdbcType=VARCHAR},
+      PCT_COMPLETE = #{record.pctComplete,jdbcType=DECIMAL},
+      PCT_OVERDUE = #{record.pctOverdue,jdbcType=DECIMAL},
+      DT_START = #{record.dtStart,jdbcType=DATE},
+      DT_END = #{record.dtEnd,jdbcType=DATE},
+      DT_CREATE = #{record.dtCreate,jdbcType=DATE},
+      CD_CREATE_USER = #{record.cdCreateUser,jdbcType=VARCHAR},
+      CD_COMMENT = #{record.cdComment,jdbcType=VARCHAR},
+      FLAG_PRIVATE = #{record.flagPrivate,jdbcType=CHAR},
+      FLAG_DELETE = #{record.flagDelete,jdbcType=CHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.Project" >
+    update projects
+    <set >
+      <if test="idInstitution != null" >
+        ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR},
+      </if>
+      <if test="nameProject != null" >
+        NAME_PROJECT = #{nameProject,jdbcType=VARCHAR},
+      </if>
+      <if test="cdStatus != null" >
+        CD_STATUS = #{cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="cdPrior != null" >
+        CD_PRIOR = #{cdPrior,jdbcType=VARCHAR},
+      </if>
+      <if test="pctComplete != null" >
+        PCT_COMPLETE = #{pctComplete,jdbcType=DECIMAL},
+      </if>
+      <if test="pctOverdue != null" >
+        PCT_OVERDUE = #{pctOverdue,jdbcType=DECIMAL},
+      </if>
+      <if test="dtStart != null" >
+        DT_START = #{dtStart,jdbcType=DATE},
+      </if>
+      <if test="dtEnd != null" >
+        DT_END = #{dtEnd,jdbcType=DATE},
+      </if>
+      <if test="dtCreate != null" >
+        DT_CREATE = #{dtCreate,jdbcType=DATE},
+      </if>
+      <if test="cdCreateUser != null" >
+        CD_CREATE_USER = #{cdCreateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="cdComment != null" >
+        CD_COMMENT = #{cdComment,jdbcType=VARCHAR},
+      </if>
+      <if test="flagPrivate != null" >
+        FLAG_PRIVATE = #{flagPrivate,jdbcType=CHAR},
+      </if>
+      <if test="flagDelete != null" >
+        FLAG_DELETE = #{flagDelete,jdbcType=CHAR},
+      </if>
+    </set>
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.Project" >
+    update projects
+    set ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR},
+      NAME_PROJECT = #{nameProject,jdbcType=VARCHAR},
+      CD_STATUS = #{cdStatus,jdbcType=VARCHAR},
+      CD_PRIOR = #{cdPrior,jdbcType=VARCHAR},
+      PCT_COMPLETE = #{pctComplete,jdbcType=DECIMAL},
+      PCT_OVERDUE = #{pctOverdue,jdbcType=DECIMAL},
+      DT_START = #{dtStart,jdbcType=DATE},
+      DT_END = #{dtEnd,jdbcType=DATE},
+      DT_CREATE = #{dtCreate,jdbcType=DATE},
+      CD_CREATE_USER = #{cdCreateUser,jdbcType=VARCHAR},
+      CD_COMMENT = #{cdComment,jdbcType=VARCHAR},
+      FLAG_PRIVATE = #{flagPrivate,jdbcType=CHAR},
+      FLAG_DELETE = #{flagDelete,jdbcType=CHAR}
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.Project" >
+    insert into projects
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      ID_PROJECT,ID_INSTITUTION,NAME_PROJECT,CD_STATUS,CD_PRIOR,PCT_COMPLETE,PCT_OVERDUE,DT_START,DT_END,DT_CREATE,CD_CREATE_USER,CD_COMMENT,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idProject,jdbcType=VARCHAR},#{item.idInstitution,jdbcType=VARCHAR},#{item.nameProject,jdbcType=VARCHAR},#{item.cdStatus,jdbcType=VARCHAR},#{item.cdPrior,jdbcType=VARCHAR},#{item.pctComplete,jdbcType=DECIMAL},#{item.pctOverdue,jdbcType=DECIMAL},#{item.dtStart,jdbcType=DATE},#{item.dtEnd,jdbcType=DATE},#{item.dtCreate,jdbcType=DATE},#{item.cdCreateUser,jdbcType=VARCHAR},#{item.cdComment,jdbcType=VARCHAR},
+      </trim>
+      )
+    </foreach>
+  </insert>
+  <select id="selectByBigOffset" resultMap="BaseResultMap" parameterType="com.sl.entity.Project" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from projects
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+      <choose >
+        <when test="oredCriteria != null and oredCriteria.size()>0 and criteria.valid" >
+          and
+        </when>
+        <otherwise >
+          where
+        </otherwise>
+      </choose>
+      ID_PROJECT &lt;=(select ID_PROJECT from projects
+      <if test="_parameter != null" >
+        <include refid="Example_Where_Clause" />
+      </if>
+      order by ID_PROJECT desc limit #{offset},1) order by ID_PROJECT desc limit #{limit}
+    </if>
+  </select>
+</mapper>

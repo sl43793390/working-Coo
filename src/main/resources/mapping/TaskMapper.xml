@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.TaskMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.Task" >
+    <id column="ID_TASK" property="idTask" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="NAME_TASK" property="nameTask" jdbcType="VARCHAR" />
+    <result column="CD_TASK_GROUP" property="cdTaskGroup" jdbcType="VARCHAR" />
+    <result column="CD_TASK_TYPE" property="cdTaskType" jdbcType="VARCHAR" />
+    <result column="CD_TAG" property="cdTag" jdbcType="VARCHAR" />
+    <result column="CD_STATUS" property="cdStatus" jdbcType="VARCHAR" />
+    <result column="INT_STAR" property="intStar" jdbcType="BIT" />
+    <result column="DT_CREATE" property="dtCreate" jdbcType="TIMESTAMP" />
+    <result column="DT_START" property="dtStart" jdbcType="TIMESTAMP" />
+    <result column="DT_END" property="dtEnd" jdbcType="TIMESTAMP" />
+    <result column="ID_USER" property="idUser" jdbcType="VARCHAR" />
+    <result column="PCT_COMPLETE" property="pctComplete" jdbcType="DECIMAL" />
+    <result column="PCT_OVERDUE" property="pctOverdue" jdbcType="DECIMAL" />
+    <result column="NBR_ESTIMATE_HOURS" property="nbrEstimateHours" jdbcType="DECIMAL" />
+    <result column="NBR_ACTUAL_HOURS" property="nbrActualHours" jdbcType="DECIMAL" />
+    <result column="CD_PRIOR" property="cdPrior" jdbcType="VARCHAR" />
+    <result column="ID_EXE_USER" property="idExeUser" jdbcType="VARCHAR" />
+    <result column="CD_DESCRIPTION" property="cdDescription" jdbcType="VARCHAR" />
+    <result column="FLAG_PRIVATE" property="flagPrivate" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_TASK, ID_PROJECT, NAME_TASK, CD_TASK_GROUP, CD_TASK_TYPE, CD_TAG, CD_STATUS, INT_STAR,
+    DT_CREATE, DT_START, DT_END, ID_USER, PCT_COMPLETE, PCT_OVERDUE,
+    NBR_ESTIMATE_HOURS, NBR_ACTUAL_HOURS, CD_PRIOR, ID_EXE_USER, CD_DESCRIPTION,
+    FLAG_PRIVATE
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.TaskExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from task
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from task
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from task
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.TaskExample" >
+    delete from task
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.Task" >
+    insert into task (ID_TASK, ID_PROJECT, NAME_TASK,
+      CD_TASK_GROUP, CD_TASK_TYPE, CD_TAG,
+      CD_STATUS, INT_STAR, DT_CREATE,
+      DT_START, DT_END, ID_USER, PCT_COMPLETE,
+      PCT_OVERDUE, NBR_ESTIMATE_HOURS, NBR_ACTUAL_HOURS, CD_PRIOR, ID_EXE_USER,
+      CD_DESCRIPTION, FLAG_PRIVATE)
+    values (#{idTask,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}, #{nameTask,jdbcType=VARCHAR},
+      #{cdTaskGroup,jdbcType=VARCHAR}, #{cdTaskType,jdbcType=VARCHAR}, #{cdTag,jdbcType=VARCHAR},
+      #{cdStatus,jdbcType=VARCHAR}, #{intStar,jdbcType=BIT}, #{dtCreate,jdbcType=TIMESTAMP},
+      #{dtStart,jdbcType=TIMESTAMP}, #{dtEnd,jdbcType=TIMESTAMP}, #{idUser,jdbcType=VARCHAR}, #{pctComplete,jdbcType=DECIMAL},
+      #{pctOverdue,jdbcType=DECIMAL}, #{nbrEstimateHours,jdbcType=DECIMAL}, #{nbrActualHours,jdbcType=DECIMAL}, #{cdPrior,jdbcType=VARCHAR}, #{idExeUser,jdbcType=VARCHAR},
+      #{cdDescription,jdbcType=VARCHAR}, #{flagPrivate,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.Task" >
+    insert into task
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="idTask != null" >
+        ID_TASK,
+      </if>
+      <if test="idProject != null" >
+        ID_PROJECT,
+      </if>
+      <if test="nameTask != null" >
+        NAME_TASK,
+      </if>
+      <if test="cdTaskGroup != null" >
+        CD_TASK_GROUP,
+      </if>
+      <if test="cdTaskType != null" >
+        CD_TASK_TYPE,
+      </if>
+      <if test="cdTag != null" >
+        CD_TAG,
+      </if>
+      <if test="cdStatus != null" >
+        CD_STATUS,
+      </if>
+      <if test="intStar != null" >
+        INT_STAR,
+      </if>
+      <if test="dtCreate != null" >
+        DT_CREATE,
+      </if>
+      <if test="dtStart != null" >
+        DT_START,
+      </if>
+      <if test="dtEnd != null" >
+        DT_END,
+      </if>
+      <if test="idUser != null" >
+        ID_USER,
+      </if>
+      <if test="pctComplete != null" >
+        PCT_COMPLETE,
+      </if>
+      <if test="pctOverdue != null" >
+        PCT_OVERDUE,
+      </if>
+      <if test="nbrEstimateHours != null" >
+        NBR_ESTIMATE_HOURS,
+      </if>
+      <if test="nbrActualHours != null" >
+        NBR_ACTUAL_HOURS,
+      </if>
+      <if test="cdPrior != null" >
+        CD_PRIOR,
+      </if>
+      <if test="idExeUser != null" >
+        ID_EXE_USER,
+      </if>
+      <if test="cdDescription != null" >
+        CD_DESCRIPTION,
+      </if>
+      <if test="flagPrivate != null" >
+        FLAG_PRIVATE,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="idTask != null" >
+        #{idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="idProject != null" >
+        #{idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="nameTask != null" >
+        #{nameTask,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTaskGroup != null" >
+        #{cdTaskGroup,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTaskType != null" >
+        #{cdTaskType,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTag != null" >
+        #{cdTag,jdbcType=VARCHAR},
+      </if>
+      <if test="cdStatus != null" >
+        #{cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="intStar != null" >
+        #{intStar,jdbcType=BIT},
+      </if>
+      <if test="dtCreate != null" >
+        #{dtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dtStart != null" >
+        #{dtStart,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dtEnd != null" >
+        #{dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idUser != null" >
+        #{idUser,jdbcType=VARCHAR},
+      </if>
+      <if test="pctComplete != null" >
+        #{pctComplete,jdbcType=DECIMAL},
+      </if>
+      <if test="pctOverdue != null" >
+        #{pctOverdue,jdbcType=DECIMAL},
+      </if>
+      <if test="nbrEstimateHours != null" >
+        #{nbrEstimateHours,jdbcType=DECIMAL},
+      </if>
+      <if test="nbrActualHours != null" >
+        #{nbrActualHours,jdbcType=DECIMAL},
+      </if>
+      <if test="cdPrior != null" >
+        #{cdPrior,jdbcType=VARCHAR},
+      </if>
+      <if test="idExeUser != null" >
+        #{idExeUser,jdbcType=VARCHAR},
+      </if>
+      <if test="cdDescription != null" >
+        #{cdDescription,jdbcType=VARCHAR},
+      </if>
+      <if test="flagPrivate != null" >
+        #{flagPrivate,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update task
+    <set >
+      <if test="record.idTask != null" >
+        ID_TASK = #{record.idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idProject != null" >
+        ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameTask != null" >
+        NAME_TASK = #{record.nameTask,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdTaskGroup != null" >
+        CD_TASK_GROUP = #{record.cdTaskGroup,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdTaskType != null" >
+        CD_TASK_TYPE = #{record.cdTaskType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdTag != null" >
+        CD_TAG = #{record.cdTag,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdStatus != null" >
+        CD_STATUS = #{record.cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.intStar != null" >
+        INT_STAR = #{record.intStar,jdbcType=BIT},
+      </if>
+      <if test="record.dtCreate != null" >
+        DT_CREATE = #{record.dtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.dtStart != null" >
+        DT_START = #{record.dtStart,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.dtEnd != null" >
+        DT_END = #{record.dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.idUser != null" >
+        ID_USER = #{record.idUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pctComplete != null" >
+        PCT_COMPLETE = #{record.pctComplete,jdbcType=DECIMAL},
+      </if>
+      <if test="record.pctOverdue != null" >
+        PCT_OVERDUE = #{record.pctOverdue,jdbcType=DECIMAL},
+      </if>
+      <if test="record.nbrEstimateHours != null" >
+        NBR_ESTIMATE_HOURS = #{record.nbrEstimateHours,jdbcType=DECIMAL},
+      </if>
+      <if test="record.nbrActualHours != null" >
+        NBR_ACTUAL_HOURS = #{record.nbrActualHours,jdbcType=DECIMAL},
+      </if>
+      <if test="record.cdPrior != null" >
+        CD_PRIOR = #{record.cdPrior,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idExeUser != null" >
+        ID_EXE_USER = #{record.idExeUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdDescription != null" >
+        CD_DESCRIPTION = #{record.cdDescription,jdbcType=VARCHAR},
+      </if>
+      <if test="record.flagPrivate != null" >
+        FLAG_PRIVATE = #{record.flagPrivate,jdbcType=CHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update task
+    set ID_TASK = #{record.idTask,jdbcType=VARCHAR},
+      ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      NAME_TASK = #{record.nameTask,jdbcType=VARCHAR},
+      CD_TASK_GROUP = #{record.cdTaskGroup,jdbcType=VARCHAR},
+      CD_TASK_TYPE = #{record.cdTaskType,jdbcType=VARCHAR},
+      CD_TAG = #{record.cdTag,jdbcType=VARCHAR},
+      CD_STATUS = #{record.cdStatus,jdbcType=VARCHAR},
+      INT_STAR = #{record.intStar,jdbcType=BIT},
+      DT_CREATE = #{record.dtCreate,jdbcType=TIMESTAMP},
+      DT_START = #{record.dtStart,jdbcType=TIMESTAMP},
+      DT_END = #{record.dtEnd,jdbcType=TIMESTAMP},
+      ID_USER = #{record.idUser,jdbcType=VARCHAR},
+      PCT_COMPLETE = #{record.pctComplete,jdbcType=DECIMAL},
+      PCT_OVERDUE = #{record.pctOverdue,jdbcType=DECIMAL},
+      NBR_ESTIMATE_HOURS = #{record.nbrEstimateHours,jdbcType=DECIMAL},
+      NBR_ACTUAL_HOURS = #{record.nbrActualHours,jdbcType=DECIMAL},
+      CD_PRIOR = #{record.cdPrior,jdbcType=VARCHAR},
+      ID_EXE_USER = #{record.idExeUser,jdbcType=VARCHAR},
+      CD_DESCRIPTION = #{record.cdDescription,jdbcType=VARCHAR},
+      FLAG_PRIVATE = #{record.flagPrivate,jdbcType=CHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.Task" >
+    update task
+    <set >
+      <if test="idProject != null" >
+        ID_PROJECT = #{idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="nameTask != null" >
+        NAME_TASK = #{nameTask,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTaskGroup != null" >
+        CD_TASK_GROUP = #{cdTaskGroup,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTaskType != null" >
+        CD_TASK_TYPE = #{cdTaskType,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTag != null" >
+        CD_TAG = #{cdTag,jdbcType=VARCHAR},
+      </if>
+      <if test="cdStatus != null" >
+        CD_STATUS = #{cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="intStar != null" >
+        INT_STAR = #{intStar,jdbcType=BIT},
+      </if>
+      <if test="dtCreate != null" >
+        DT_CREATE = #{dtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dtStart != null" >
+        DT_START = #{dtStart,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dtEnd != null" >
+        DT_END = #{dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idUser != null" >
+        ID_USER = #{idUser,jdbcType=VARCHAR},
+      </if>
+      <if test="pctComplete != null" >
+        PCT_COMPLETE = #{pctComplete,jdbcType=DECIMAL},
+      </if>
+      <if test="pctOverdue != null" >
+        PCT_OVERDUE = #{pctOverdue,jdbcType=DECIMAL},
+      </if>
+      <if test="nbrEstimateHours != null" >
+        NBR_ESTIMATE_HOURS = #{nbrEstimateHours,jdbcType=DECIMAL},
+      </if>
+      <if test="nbrActualHours != null" >
+        NBR_ACTUAL_HOURS = #{nbrActualHours,jdbcType=DECIMAL},
+      </if>
+      <if test="cdPrior != null" >
+        CD_PRIOR = #{cdPrior,jdbcType=VARCHAR},
+      </if>
+      <if test="idExeUser != null" >
+        ID_EXE_USER = #{idExeUser,jdbcType=VARCHAR},
+      </if>
+      <if test="cdDescription != null" >
+        CD_DESCRIPTION = #{cdDescription,jdbcType=VARCHAR},
+      </if>
+      <if test="flagPrivate != null" >
+        FLAG_PRIVATE = #{flagPrivate,jdbcType=CHAR},
+      </if>
+    </set>
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.Task" >
+    update task
+    set ID_PROJECT = #{idProject,jdbcType=VARCHAR},
+      NAME_TASK = #{nameTask,jdbcType=VARCHAR},
+      CD_TASK_GROUP = #{cdTaskGroup,jdbcType=VARCHAR},
+      CD_TASK_TYPE = #{cdTaskType,jdbcType=VARCHAR},
+      CD_TAG = #{cdTag,jdbcType=VARCHAR},
+      CD_STATUS = #{cdStatus,jdbcType=VARCHAR},
+      INT_STAR = #{intStar,jdbcType=BIT},
+      DT_CREATE = #{dtCreate,jdbcType=TIMESTAMP},
+      DT_START = #{dtStart,jdbcType=TIMESTAMP},
+      DT_END = #{dtEnd,jdbcType=TIMESTAMP},
+      ID_USER = #{idUser,jdbcType=VARCHAR},
+      PCT_COMPLETE = #{pctComplete,jdbcType=DECIMAL},
+      PCT_OVERDUE = #{pctOverdue,jdbcType=DECIMAL},
+      NBR_ESTIMATE_HOURS = #{nbrEstimateHours,jdbcType=DECIMAL},
+      NBR_ACTUAL_HOURS = #{nbrActualHours,jdbcType=DECIMAL},
+      CD_PRIOR = #{cdPrior,jdbcType=VARCHAR},
+      ID_EXE_USER = #{idExeUser,jdbcType=VARCHAR},
+      CD_DESCRIPTION = #{cdDescription,jdbcType=VARCHAR},
+      FLAG_PRIVATE = #{flagPrivate,jdbcType=CHAR}
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.Task" >
+    insert into task
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      ID_TASK,ID_PROJECT,NAME_TASK,CD_TASK_GROUP,CD_TASK_TYPE,CD_TAG,CD_STATUS,INT_STAR,DT_CREATE,DT_START,DT_END,ID_USER,PCT_COMPLETE,PCT_OVERDUE,NBR_ESTIMATE_HOURS,NBR_ACTUAL_HOURS,CD_PRIOR,ID_EXE_USER,CD_DESCRIPTION,FLAG_PRIVATE,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idTask,jdbcType=VARCHAR},#{item.idProject,jdbcType=VARCHAR},#{item.nameTask,jdbcType=VARCHAR},#{item.cdTaskGroup,jdbcType=VARCHAR},#{item.cdTaskType,jdbcType=VARCHAR},#{item.cdTag,jdbcType=VARCHAR},#{item.cdStatus,jdbcType=VARCHAR},#{item.intStar,jdbcType=BIT},#{item.dtCreate,jdbcType=TIMESTAMP},#{item.dtStart,jdbcType=TIMESTAMP},#{item.dtEnd,jdbcType=TIMESTAMP},#{item.idUser,jdbcType=VARCHAR},#{item.pctComplete,jdbcType=DECIMAL},#{item.pctOverdue,jdbcType=DECIMAL},#{item.nbrEstimateHours,jdbcType=DECIMAL},#{item.nbrActualHours,jdbcType=DECIMAL},#{item.cdPrior,jdbcType=VARCHAR},#{item.idExeUser,jdbcType=VARCHAR},#{item.cdDescription,jdbcType=VARCHAR},#{item.flagPrivate,jdbcType=CHAR},
+      </trim>
+      )
+    </foreach>
+  </insert>
+  <select id="selectByBigOffset" resultMap="BaseResultMap" parameterType="com.sl.entity.Task" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from task
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+      <choose >
+        <when test="oredCriteria != null and oredCriteria.size()>0 and criteria.valid" >
+          and
+        </when>
+        <otherwise >
+          where
+        </otherwise>
+      </choose>
+      ID_TASK &lt;=(select ID_TASK from task
+      <if test="_parameter != null" >
+        <include refid="Example_Where_Clause" />
+      </if>
+      order by ID_TASK desc limit #{offset},1) order by ID_TASK desc limit #{limit}
+    </if>
+  </select>
+  
+  <!-- 任务创建趋势。原先不带项目条件，统计页传了 idProject 却被忽略，
+       导致「当前项目的任务趋势」实际画的是全库任务，这里补上过滤。 -->
+  <select id="getTaskTrending" resultType="java.util.LinkedHashMap">
+  SELECT DT_CREATE,count(ID_TASK) COUNT from task
+  <where>
+    <if test="idProject != null and idProject != ''">
+      ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+    </if>
+  </where>
+GROUP BY DT_CREATE
+ORDER BY DT_CREATE
+  </select>
+
+  <!-- ============================================================
+       列表分页查询：供 Grid 懒加载使用，只取当前页，避免一次性捞出全部任务。
+       条件与 TaskProcess#getTaskByCondition 保持一致。
+       ============================================================ -->
+  <sql id="Task_Page_Condition" >
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+      <!--
+        可见性口径：
+        · flagPrivate 为空（管理员传 null）：不做可见性过滤，项目下全部任务；
+        · flagPrivate 非空（普通用户）：公开任务 + 自己创建的 + 分派给自己的。
+          第三路走 task_user exists：任务被别人设为私有时，执行人本人在「我的任务」
+          里也应可见（分配即可见），与 TaskProcess#getTasksVisibleTo 口径一致。
+      -->
+      <if test="flagPrivate != null and flagPrivate != ''">
+        and (FLAG_PRIVATE = #{flagPrivate,jdbcType=CHAR}
+        <if test="viewUserId != null and viewUserId != ''">
+          or ID_USER = #{viewUserId,jdbcType=VARCHAR}
+          or exists (select 1 from task_user tu
+                     where tu.ID_TASK = task.ID_TASK
+                       and tu.ID_EXE_USER = #{viewUserId,jdbcType=VARCHAR})
+        </if>
+        )
+      </if>
+    <if test="taskIds != null and taskIds.size() > 0">
+      and ID_TASK in
+      <foreach collection="taskIds" item="tid" open="(" close=")" separator=",">#{tid,jdbcType=VARCHAR}</foreach>
+    </if>
+    <if test="cdTaskType != null">
+      and CD_TASK_TYPE = #{cdTaskType,jdbcType=VARCHAR}
+    </if>
+    <if test="cdTag != null">
+      and CD_TAG = #{cdTag,jdbcType=VARCHAR}
+    </if>
+    <if test="cdStatus != null">
+      and CD_STATUS = #{cdStatus,jdbcType=VARCHAR}
+    </if>
+    <if test="cdTaskGroup != null">
+      and CD_TASK_GROUP = #{cdTaskGroup,jdbcType=VARCHAR}
+    </if>
+    <if test="nameTask != null">
+      and NAME_TASK like concat('%', #{nameTask,jdbcType=VARCHAR}, '%')
+    </if>
+    <if test="idUser != null">
+      and ID_USER = #{idUser,jdbcType=VARCHAR}
+    </if>
+    <if test="exeUser != null">
+      and ID_EXE_USER = #{exeUser,jdbcType=VARCHAR}
+    </if>
+  </sql>
+
+  <select id="selectTaskPage" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    from task
+    <include refid="Task_Page_Condition" />
+    order by DT_CREATE desc
+    limit #{offset,jdbcType=INTEGER}, #{limit,jdbcType=INTEGER}
+  </select>
+
+  <select id="countTask" resultType="long" parameterType="map" >
+    select count(1) from task
+    <include refid="Task_Page_Condition" />
+  </select>
+
+  <!-- 到期提醒：任务 + 执行人一起出，供通知调度器扫描 -->
+  <select id="selectDueTaskExecutors" resultType="java.util.LinkedHashMap" parameterType="map" >
+    select t.ID_TASK, t.ID_PROJECT, t.NAME_TASK, t.DT_END, t.DT_START, t.CD_STATUS,
+           t.ID_USER as ID_CREATE_USER, tu.ID_EXE_USER
+    from task t
+    join task_user tu on tu.ID_TASK = t.ID_TASK
+    where t.DT_END &gt;= #{from,jdbcType=TIMESTAMP}
+      and t.DT_END &lt;= #{to,jdbcType=TIMESTAMP}
+      and (t.CD_STATUS is null or t.CD_STATUS not in ('已结束', '已废弃'))
+  </select>
+
+</mapper>

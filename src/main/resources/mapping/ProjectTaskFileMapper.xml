@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.ProjectTaskFileMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.ProjectTaskFile" >
+    <id column="ID_FILE" jdbcType="VARCHAR" property="idFile" />
+    <result column="ID_PROJECT" jdbcType="VARCHAR" property="idProject" />
+    <result column="ID_TASK" jdbcType="VARCHAR" property="idTask" />
+    <result column="NAME_FILE" jdbcType="VARCHAR" property="nameFile" />
+    <result column="CD_FILE_PATH" jdbcType="VARCHAR" property="cdFilePath" />
+    <result column="DT_UPLOAD" jdbcType="TIMESTAMP" property="dtUpload" />
+    <result column="ID_USER" jdbcType="VARCHAR" property="idUser" />
+    <result column="CD_COMMENT" jdbcType="VARCHAR" property="cdComment" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_FILE, ID_PROJECT, ID_TASK, NAME_FILE, CD_FILE_PATH, DT_UPLOAD, ID_USER, CD_COMMENT
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.ProjectTaskFileExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from project_task_file
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from project_task_file
+    where ID_FILE = #{idFile,jdbcType=VARCHAR}
+  </select>
+  <select id="selectByProjectAndTadkId" resultMap="BaseResultMap" parameterType="map" >
+    select 
+    <include refid="Base_Column_List" />
+    from project_task_file
+    where ID_PROJECT = #{projectId,jdbcType=VARCHAR}
+     <if test="taskId != null">
+    	 and ID_TASK = #{taskId,jdbcType=VARCHAR}
+      </if>
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from project_task_file
+    where ID_FILE = #{idFile,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.ProjectTaskFileExample" >
+    delete from project_task_file
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.ProjectTaskFile" >
+    insert into project_task_file (ID_FILE, ID_PROJECT, ID_TASK, 
+      NAME_FILE, CD_FILE_PATH, DT_UPLOAD
+      )
+    values (#{idFile,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}, #{idTask,jdbcType=VARCHAR}, 
+      #{nameFile,jdbcType=VARCHAR}, #{cdFilePath,jdbcType=VARCHAR}, #{dtUpload,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.ProjectTaskFile">
+    insert into project_task_file
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="idFile != null">
+        ID_FILE,
+      </if>
+      <if test="idProject != null">
+        ID_PROJECT,
+      </if>
+      <if test="idTask != null">
+        ID_TASK,
+      </if>
+      <if test="nameFile != null">
+        NAME_FILE,
+      </if>
+      <if test="cdFilePath != null">
+        CD_FILE_PATH,
+      </if>
+      <if test="dtUpload != null">
+        DT_UPLOAD,
+      </if>
+      <if test="idUser != null">
+        ID_USER,
+      </if>
+      <if test="cdComment != null">
+        CD_COMMENT,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="idFile != null">
+        #{idFile,jdbcType=VARCHAR},
+      </if>
+      <if test="idProject != null">
+        #{idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="idTask != null">
+        #{idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="nameFile != null">
+        #{nameFile,jdbcType=VARCHAR},
+      </if>
+      <if test="cdFilePath != null">
+        #{cdFilePath,jdbcType=VARCHAR},
+      </if>
+      <if test="dtUpload != null">
+        #{dtUpload,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idUser != null">
+        #{idUser,jdbcType=VARCHAR},
+      </if>
+      <if test="cdComment != null">
+        #{cdComment,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map">
+    update project_task_file
+    <set>
+      <if test="record.idFile != null">
+        ID_FILE = #{record.idFile,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idProject != null">
+        ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idTask != null">
+        ID_TASK = #{record.idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameFile != null">
+        NAME_FILE = #{record.nameFile,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdFilePath != null">
+        CD_FILE_PATH = #{record.cdFilePath,jdbcType=VARCHAR},
+      </if>
+      <if test="record.dtUpload != null">
+        DT_UPLOAD = #{record.dtUpload,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.idUser != null">
+        ID_USER = #{record.idUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdComment != null">
+        CD_COMMENT = #{record.cdComment,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update project_task_file
+    set ID_FILE = #{record.idFile,jdbcType=VARCHAR},
+      ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      ID_TASK = #{record.idTask,jdbcType=VARCHAR},
+      NAME_FILE = #{record.nameFile,jdbcType=VARCHAR},
+      CD_FILE_PATH = #{record.cdFilePath,jdbcType=VARCHAR},
+      DT_UPLOAD = #{record.dtUpload,jdbcType=TIMESTAMP},
+      ID_USER = #{record.idUser,jdbcType=VARCHAR},
+      CD_COMMENT = #{record.cdComment,jdbcType=VARCHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.ProjectTaskFile">
+    update project_task_file
+    <set>
+      <if test="idProject != null">
+        ID_PROJECT = #{idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="idTask != null">
+        ID_TASK = #{idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="nameFile != null">
+        NAME_FILE = #{nameFile,jdbcType=VARCHAR},
+      </if>
+      <if test="cdFilePath != null">
+        CD_FILE_PATH = #{cdFilePath,jdbcType=VARCHAR},
+      </if>
+      <if test="dtUpload != null">
+        DT_UPLOAD = #{dtUpload,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idUser != null">
+        ID_USER = #{idUser,jdbcType=VARCHAR},
+      </if>
+      <if test="cdComment != null">
+        CD_COMMENT = #{cdComment,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where ID_FILE = #{idFile,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.ProjectTaskFile">
+    update project_task_file
+    set ID_PROJECT = #{idProject,jdbcType=VARCHAR},
+      ID_TASK = #{idTask,jdbcType=VARCHAR},
+      NAME_FILE = #{nameFile,jdbcType=VARCHAR},
+      CD_FILE_PATH = #{cdFilePath,jdbcType=VARCHAR},
+      DT_UPLOAD = #{dtUpload,jdbcType=TIMESTAMP},
+      ID_USER = #{idUser,jdbcType=VARCHAR},
+      CD_COMMENT = #{cdComment,jdbcType=VARCHAR}
+    where ID_FILE = #{idFile,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.ProjectTaskFile" >
+    insert into project_task_file
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+       ID_FILE, ID_PROJECT, ID_TASK, NAME_FILE, CD_FILE_PATH, DT_UPLOAD, ID_USER, CD_COMMENT,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idFile,jdbcType=VARCHAR},#{item.idProject,jdbcType=VARCHAR},#{item.idTask,jdbcType=VARCHAR},
+        #{item.nameFile,jdbcType=VARCHAR},#{item.cdFilePath,jdbcType=VARCHAR},#{item.dtUpload,jdbcType=TIMESTAMP},#{idUser,jdbcType=VARCHAR}, #{cdComment,jdbcType=VARCHAR}
+      </trim>
+      )
+    </foreach>
+  </insert>
+  
+  
+  <select id="selectByBigOffset" resultMap="BaseResultMap" parameterType="com.sl.entity.ProjectTaskFile" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from project_task_file
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+      <choose >
+        <when test="oredCriteria != null and oredCriteria.size()>0 and criteria.valid" >
+          and
+        </when>
+        <otherwise >
+          where
+        </otherwise>
+      </choose>
+      ID_FILE &lt;=(select ID_FILE from project_task_file
+      <if test="_parameter != null" >
+        <include refid="Example_Where_Clause" />
+      </if>
+      order by ID_FILE desc limit #{offset},1) order by ID_FILE desc limit #{limit}
+    </if>
+  </select>
+</mapper>

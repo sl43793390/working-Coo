@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.ProjectGroupMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.ProjectGroup" >
+    <id column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <id column="CD_GROUP" property="cdGroup" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_PROJECT, CD_GROUP
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.ProjectGroupExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from project_group
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="map" >
+    delete from project_group
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+      and CD_GROUP = #{cdGroup,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.ProjectGroupExample" >
+    delete from project_group
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.ProjectGroup" >
+    insert into project_group (ID_PROJECT, CD_GROUP)
+    values (#{idProject,jdbcType=VARCHAR}, #{cdGroup,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.ProjectGroup" >
+    insert into project_group
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="idProject != null" >
+        ID_PROJECT,
+      </if>
+      <if test="cdGroup != null" >
+        CD_GROUP,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="idProject != null" >
+        #{idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="cdGroup != null" >
+        #{cdGroup,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update project_group
+    <set >
+      <if test="record.idProject != null" >
+        ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdGroup != null" >
+        CD_GROUP = #{record.cdGroup,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update project_group
+    set ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      CD_GROUP = #{record.cdGroup,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.ProjectGroup" >
+    insert into project_group
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      ID_PROJECT,CD_GROUP,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idProject,jdbcType=VARCHAR},#{item.cdGroup,jdbcType=VARCHAR},
+      </trim>
+      )
+    </foreach>
+  </insert>
+</mapper>

@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!-- Project from https://start.vaadin.com/ -->
+    <groupId>com.example.application</groupId>
+    <artifactId>workingCoo</artifactId>
+    <name>my-vaadin23demo</name>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <java.version>21</java.version>
+        <vaadin.version>24.10.10</vaadin.version>
+<!--        <vaadin.version>23.1.7</vaadin.version>-->
+        <!-- this parameter is needed as spring-boot bom overwrites it -->
+    </properties>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.0</version>
+    </parent>
+
+    <repositories>
+        <!-- The order of definitions matters. Explicitly defining central here to make sure it has the highest priority. -->
+
+        <!-- Main Maven repository -->
+        <repository>
+			<id>maven</id>
+			<name>central</name>
+			<url>https://repo1.maven.org/maven2/</url>
+			   <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+		</repository>
+        <!-- Repository used by many Vaadin add-ons -->
+        <repository>
+            <id>Vaadin Directory</id>
+            <url>https://maven.vaadin.com/vaadin-addons</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        	<repository>
+			<id>sonatype</id>
+			<name>sonatype maven</name>
+			<url>https://s01.oss.sonatype.org/content/groups/public/</url>
+		</repository>
+		<repository>
+			<id>vaadin-addons</id>
+			<url>http://maven.vaadin.com/vaadin-addons</url>
+			 <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+		</repository>
+    </repositories>
+
+    <pluginRepositories>
+        <!-- The order of definitions matters. Explicitly defining central here to make sure it has the highest priority. -->
+        <pluginRepository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+            <id>vaadin-prereleases</id>
+            <url>
+                https://maven.vaadin.com/vaadin-prereleases/
+            </url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.vaadin</groupId>
+                <artifactId>vaadin-bom</artifactId>
+                <version>${vaadin.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <!-- Replace artifactId with vaadin-core to use only free components -->
+            <artifactId>vaadin</artifactId>
+            <exclusions>
+            	<!-- hilla-dev 是 Hilla 开发模式组件，纯 Flow 应用不需要；
+                     排除以与上面 hilla 的排除保持一致 -->
+            	<exclusion>
+            		<groupId>com.vaadin</groupId>
+            		<artifactId>hilla-dev</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-spring-boot-starter</artifactId>
+            <exclusions>
+            	<exclusion>
+            		<groupId>org.springframework.boot</groupId>
+            		<artifactId>spring-boot-starter-web</artifactId>
+            	</exclusion>
+            	<!-- log4j2 API 桥接到 SLF4J 的桥接器，与 log4j-core 实现共存会导致
+                     Spring Boot Log4J2LoggingSystem 强转 SLF4JLoggerContext 失败 -->
+            	<exclusion>
+            		<groupId>org.apache.logging.log4j</groupId>
+            		<artifactId>log4j-to-slf4j</artifactId>
+            	</exclusion>
+            	<!-- 项目是纯 Vaadin Flow 应用，不使用 Hilla。hilla 24.10.9 的
+                     EndpointControllerConfiguration 与 Spring 6.2 (Boot 3.5) 不兼容，
+                     启动即抛 "Neither PathPatterns nor String patterns condition"，
+                     排除后其自动配置不会加载 -->
+            	<exclusion>
+            		<groupId>com.vaadin</groupId>
+            		<artifactId>hilla</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+            <exclusions>
+            	<exclusion>
+            		<groupId>org.springframework.boot</groupId>
+            		<artifactId>spring-boot-starter-logging</artifactId>
+            	</exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- 操作历史（T2-10）用 @AuditLog + AOP 切面落库，需要 AOP 支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <!-- 健康检查与监控端点（T3-5） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- 单测用内存库（T3-4）。MySQL 专属语法（ENGINE=InnoDB / ngram 全文索引）
+             在 H2 上跑不通，所以测试只覆盖不依赖具体方言的纯逻辑。 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-spring-boot-starter</artifactId>
+            <version>2.0.6</version>
+            <classifier>jakarta</classifier>
+            <scope>compile</scope>
+            <exclusions>
+                <!-- classifier 不随传递依赖继承，排除掉传递进来的 javax flavor -->
+                <exclusion>
+                    <groupId>org.apache.shiro</groupId>
+                    <artifactId>shiro-spring</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- shiro 的 jakarta flavor 不随传递依赖继承（Maven 的 classifier 不传递），
+             必须显式声明核心模块的 jakarta 版本，否则混入 javax 版导致启动失败 -->
+        <dependency>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-spring</artifactId>
+            <version>2.0.6</version>
+            <classifier>jakarta</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.shiro</groupId>
+                    <artifactId>shiro-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.shiro</groupId>
+                    <artifactId>shiro-web</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-web</artifactId>
+            <version>2.0.6</version>
+            <classifier>jakarta</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.shiro</groupId>
+                    <artifactId>shiro-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-core</artifactId>
+            <version>2.0.6</version>
+            <classifier>jakarta</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.ehcache</groupId>
+            <artifactId>ehcache</artifactId>
+            <version>3.10.8</version>
+        </dependency>
+
+         <dependency>
+			<groupId>de.f0rce.signaturepad</groupId>
+			<artifactId>signature-widget</artifactId>
+<!--			<version>2.0.2</version>-->
+			<version>4.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.flowingcode.addons</groupId>
+            <artifactId>xterm-console</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+<!--        富文本编辑器：Trix（enhanced-rich-text-editor）已移除，
+     统一使用自封装的 Quill 2 通用编辑器 com.sl.app.component.editor.QuillEditor
+     （前端依赖 quill@2.0.3 由 QuillEditor 的 @NpmPackage 声明）-->
+<!--        数据源链接池-->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+		</dependency>
+
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.3.0</version>
+        </dependency>
+
+		<!-- Spring Boot 3 专用 starter（旧 mybatis-plus-boot-starter 是 Boot 2 变体，
+		     传递的 mybatis-spring 2.x 与 Spring 6 不兼容：factoryBeanObjectType 需为 Class 类型） -->
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+			<version>3.5.15</version>
+		</dependency>
+		<!-- spring-boot的二级缓存 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+		</dependency>
+		<dependency> <!-- for ChainedTransactionManager configuration -->
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-commons</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<!-- 日志：统一使用 log4j2 实现（含 log4j-core / log4j-slf4j2-impl / log4j-jul） -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-log4j2</artifactId>
+		</dependency>
+		<!-- log4j2 AsyncLogger 的高性能队列底层（生产环境推荐） -->
+		<dependency>
+			<groupId>com.lmax</groupId>
+			<artifactId>disruptor</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
+        <dependency>
+			<groupId>cn.hutool</groupId>
+			<artifactId>hutool-all</artifactId>
+			<version>5.8.7</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.pagehelper</groupId>
+			<artifactId>pagehelper</artifactId>
+			<version>4.1.3</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.67</version>
+		</dependency>
+		
+		<dependency>
+		   <groupId>org.vaadin.addons.minicalendar</groupId>
+		   <artifactId>addon</artifactId>
+		   <version>1.4.0</version>
+		</dependency>
+<!--		<dependency>-->
+<!--		   <groupId>org.vaadin.stefan</groupId>-->
+<!--		   <artifactId>fullcalendar2-scheduler</artifactId>-->
+<!--		   <version>6.0.0</version>-->
+<!--		</dependency>-->
+		<!-- FullCalendar for Flow（封装 FullCalendar 6.x，MIT）：日程页的日历组件。
+		     6.x 线官方声明支持 Vaadin 14~24（7.x 起仅支持 Vaadin 25）；
+		     scheduler 变体（资源时间线视图）基于 FullCalendar 商业授权，不用 -->
+		<dependency>
+		   <groupId>org.vaadin.stefan</groupId>
+		   <artifactId>fullcalendar2</artifactId>
+		   <version>6.3.1</version>
+		</dependency>
+<!--		Vaadin 24+    Vaadin 23 in 2.0.0 -->
+		<dependency>
+		   <groupId>com.vaadin.componentfactory</groupId>
+		   <artifactId>treecombobox</artifactId>
+		   <version>4.0.0</version>
+		   <!-- popup 3.0.0 的 Popup 继承 PolymerTemplate，Vaadin 24 已移除该类，
+		        会导致 vaadin-maven-plugin 扫描注解时 NPE；treecombobox 本身并不使用它 -->
+		   <exclusions>
+		       <exclusion>
+		           <groupId>com.vaadin.componentfactory</groupId>
+		           <artifactId>popup</artifactId>
+		       </exclusion>
+		   </exclusions>
+		</dependency>
+
+        <dependency>
+            <groupId>cn.idev.excel</groupId>
+            <artifactId>fastexcel</artifactId>
+            <version>1.3.0</version>
+        </dependency>
+		
+		<dependency>
+		   <groupId>com.github.olafj</groupId>
+		   <artifactId>video-tag-java</artifactId>
+		   <version>1.0.2</version>
+		</dependency>
+    </dependencies>
+
+    <build>
+        <defaultGoal>spring-boot:run</defaultGoal>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <!-- Clean build and startup time for Vaadin apps sometimes may exceed
+                     the default Spring Boot's 30sec timeout.  -->
+                <configuration>
+                    <!-- 下面的 add-opens java.base/java.lang 是给 EasyExcel 3.x 用的：
+                         它底层走 cglib 的 BeanMap，cglib 要反射调用
+                         ClassLoader#defineClass，JDK 17 起的强封装默认禁止，
+                         不加这个参数「任务导入导出」一导出就抛
+                         InaccessibleObjectException。升级到不用 cglib 的
+                         EasyExcel 版本后可以去掉。 -->
+                    <jvmArguments>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5971 --add-opens java.base/java.lang=ALL-UNNAMED</jvmArguments>
+                    <wait>500</wait>
+                    <maxAttempts>240</maxAttempts>
+                </configuration>
+            </plugin>
+
+            <!--
+                Take care of synchronizing java dependencies and imports in
+                package.json and main.js files.
+                It also creates webpack.config.js if not exists yet.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>21</source>
+					<target>21</target>
+				</configuration>
+            </plugin>
+
+            <!-- 单测（T3-4）。argLine 与 spring-boot-maven-plugin 的 jvmArguments 保持一致：
+                 不加 add-opens 的话，凡是碰 EasyExcel 的用例都会因为 cglib 被 JDK 强封装挡住而报错。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.vaadin</groupId>
+                <artifactId>vaadin-maven-plugin</artifactId>
+                <version>${vaadin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-frontend</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <!-- Production mode is activated using -Pproduction -->
+            <id>production</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.vaadin</groupId>
+                        <artifactId>vaadin-maven-plugin</artifactId>
+                        <version>${vaadin.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>build-frontend</goal>
+                                </goals>
+                                <phase>compile</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <productionMode>true</productionMode>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+<!--        <profile>-->
+<!--            <id>it</id>-->
+<!--            <build>-->
+<!--                <plugins>-->
+<!--                    <plugin>-->
+<!--                        <groupId>org.springframework.boot</groupId>-->
+<!--                        <artifactId>spring-boot-maven-plugin</artifactId>-->
+<!--                        <executions>-->
+<!--                            <execution>-->
+<!--                                <id>start-spring-boot</id>-->
+<!--                                <phase>pre-integration-test</phase>-->
+<!--                                <goals>-->
+<!--                                    <goal>start</goal>-->
+<!--                                </goals>-->
+<!--                            </execution>-->
+<!--                            <execution>-->
+<!--                                <id>stop-spring-boot</id>-->
+<!--                                <phase>post-integration-test</phase>-->
+<!--                                <goals>-->
+<!--                                    <goal>stop</goal>-->
+<!--                                </goals>-->
+<!--                            </execution>-->
+<!--                        </executions>-->
+<!--                    </plugin>-->
+
+<!--                     Runs the integration tests (*IT) after the server is started -->
+<!--                    <plugin>-->
+<!--                        <groupId>org.apache.maven.plugins</groupId>-->
+<!--                        <artifactId>maven-failsafe-plugin</artifactId>-->
+<!--                        <executions>-->
+<!--                            <execution>-->
+<!--                                <goals>-->
+<!--                                    <goal>integration-test</goal>-->
+<!--                                    <goal>verify</goal>-->
+<!--                                </goals>-->
+<!--                            </execution>-->
+<!--                        </executions>-->
+<!--                        <configuration>-->
+<!--                            <trimStackTrace>false</trimStackTrace>-->
+<!--                            <enableAssertions>true</enableAssertions>-->
+<!--                        </configuration>-->
+<!--                    </plugin>-->
+<!--                </plugins>-->
+<!--            </build>-->
+<!--        </profile>-->
+
+    </profiles>
+</project>

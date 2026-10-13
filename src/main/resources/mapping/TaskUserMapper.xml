@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.TaskUserMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.TaskUser" >
+    <id column="ID_TASK" property="idTask" jdbcType="VARCHAR" />
+    <id column="ID_EXE_USER" property="idExeUser" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_TASK, ID_EXE_USER, ID_PROJECT
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.TaskUserExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from task_user
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="map" >
+    select 
+    <include refid="Base_Column_List" />
+    from task_user
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+      and ID_EXE_USER = #{idExeUser,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="map" >
+    delete from task_user
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+      and ID_EXE_USER = #{idExeUser,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.TaskUserExample" >
+    delete from task_user
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.TaskUser" >
+    insert into task_user (ID_TASK, ID_EXE_USER, ID_PROJECT
+      )
+    values (#{idTask,jdbcType=VARCHAR}, #{idExeUser,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.TaskUser" >
+    insert into task_user
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="idTask != null" >
+        ID_TASK,
+      </if>
+      <if test="idExeUser != null" >
+        ID_EXE_USER,
+      </if>
+      <if test="idProject != null" >
+        ID_PROJECT,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="idTask != null" >
+        #{idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="idExeUser != null" >
+        #{idExeUser,jdbcType=VARCHAR},
+      </if>
+      <if test="idProject != null" >
+        #{idProject,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update task_user
+    <set >
+      <if test="record.idTask != null" >
+        ID_TASK = #{record.idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idExeUser != null" >
+        ID_EXE_USER = #{record.idExeUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idProject != null" >
+        ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update task_user
+    set ID_TASK = #{record.idTask,jdbcType=VARCHAR},
+      ID_EXE_USER = #{record.idExeUser,jdbcType=VARCHAR},
+      ID_PROJECT = #{record.idProject,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.TaskUser" >
+    update task_user
+    <set >
+      <if test="idProject != null" >
+        ID_PROJECT = #{idProject,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+      and ID_EXE_USER = #{idExeUser,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.TaskUser" >
+    update task_user
+    set ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+      and ID_EXE_USER = #{idExeUser,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.TaskUser" >
+    insert into task_user
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      ID_TASK,ID_EXE_USER,ID_PROJECT,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idTask,jdbcType=VARCHAR},#{item.idExeUser,jdbcType=VARCHAR},#{item.idProject,jdbcType=VARCHAR},
+      </trim>
+      )
+    </foreach>
+  </insert>
+</mapper>

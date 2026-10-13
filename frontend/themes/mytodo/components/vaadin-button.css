@@ -1,0 +1,4 @@
+
+:host([theme~='primary']) {
+    min-width: calc(var(--lumo-button-size) * 1.5);
+}

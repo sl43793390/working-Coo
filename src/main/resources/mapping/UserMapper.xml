@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.UserMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.User" >
+    <id column="USER_ID" property="userId" jdbcType="VARCHAR" />
+    <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+    <result column="EMAIL" property="email" jdbcType="VARCHAR" />
+    <result column="PASSWORD" property="password" jdbcType="VARCHAR" />
+    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="EXPIRE_TIME" property="expireTime" jdbcType="TIMESTAMP" />
+    <result column="DEPARTMENT" property="department" jdbcType="VARCHAR" />
+    <result column="ORGANIZATION" property="organization" jdbcType="VARCHAR" />
+    <result column="ID_INSTITUTION" property="idInstitution" jdbcType="VARCHAR" />
+    <result column="VERSION" property="version" jdbcType="TINYINT" />
+    <result column="CD_PHONE" property="cdPhone" jdbcType="VARCHAR" />
+    <result column="USER_FLAG" property="userFlag" jdbcType="VARCHAR" />
+    <result column="CD_FROZEN_STATE" property="cdFrozenState" jdbcType="VARCHAR" />
+    <result column="DT_LOGIN" property="dtLogin" jdbcType="DATE" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    USER_ID, USER_NAME, EMAIL, PASSWORD, CREATE_TIME, EXPIRE_TIME, DEPARTMENT, ORGANIZATION, 
+    ID_INSTITUTION, VERSION, CD_PHONE, USER_FLAG, CD_FROZEN_STATE, DT_LOGIN
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.UserExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from users
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from users
+    where USER_ID = #{userId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from users
+    where USER_ID = #{userId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.UserExample" >
+    delete from users
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.User" >
+    insert into users (USER_ID, USER_NAME, EMAIL, 
+      PASSWORD, CREATE_TIME, EXPIRE_TIME, 
+      DEPARTMENT, ORGANIZATION, ID_INSTITUTION, 
+      VERSION, CD_PHONE, USER_FLAG, 
+      CD_FROZEN_STATE, DT_LOGIN)
+    values (#{userId,jdbcType=VARCHAR}, #{userName,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
+      #{password,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{expireTime,jdbcType=TIMESTAMP}, 
+      #{department,jdbcType=VARCHAR}, #{organization,jdbcType=VARCHAR}, #{idInstitution,jdbcType=VARCHAR}, 
+      #{version,jdbcType=TINYINT}, #{cdPhone,jdbcType=VARCHAR}, #{userFlag,jdbcType=VARCHAR}, 
+      #{cdFrozenState,jdbcType=VARCHAR}, #{dtLogin,jdbcType=DATE})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.User" >
+    insert into users
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="userId != null" >
+        USER_ID,
+      </if>
+      <if test="userName != null" >
+        USER_NAME,
+      </if>
+      <if test="email != null" >
+        EMAIL,
+      </if>
+      <if test="password != null" >
+        PASSWORD,
+      </if>
+      <if test="createTime != null" >
+        CREATE_TIME,
+      </if>
+      <if test="expireTime != null" >
+        EXPIRE_TIME,
+      </if>
+      <if test="department != null" >
+        DEPARTMENT,
+      </if>
+      <if test="organization != null" >
+        ORGANIZATION,
+      </if>
+      <if test="idInstitution != null" >
+        ID_INSTITUTION,
+      </if>
+      <if test="version != null" >
+        VERSION,
+      </if>
+      <if test="cdPhone != null" >
+        CD_PHONE,
+      </if>
+      <if test="userFlag != null" >
+        USER_FLAG,
+      </if>
+      <if test="cdFrozenState != null" >
+        CD_FROZEN_STATE,
+      </if>
+      <if test="dtLogin != null" >
+        DT_LOGIN,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="userId != null" >
+        #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null" >
+        #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="expireTime != null" >
+        #{expireTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="department != null" >
+        #{department,jdbcType=VARCHAR},
+      </if>
+      <if test="organization != null" >
+        #{organization,jdbcType=VARCHAR},
+      </if>
+      <if test="idInstitution != null" >
+        #{idInstitution,jdbcType=VARCHAR},
+      </if>
+      <if test="version != null" >
+        #{version,jdbcType=TINYINT},
+      </if>
+      <if test="cdPhone != null" >
+        #{cdPhone,jdbcType=VARCHAR},
+      </if>
+      <if test="userFlag != null" >
+        #{userFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="cdFrozenState != null" >
+        #{cdFrozenState,jdbcType=VARCHAR},
+      </if>
+      <if test="dtLogin != null" >
+        #{dtLogin,jdbcType=DATE},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update users
+    <set >
+      <if test="record.userId != null" >
+        USER_ID = #{record.userId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.userName != null" >
+        USER_NAME = #{record.userName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.email != null" >
+        EMAIL = #{record.email,jdbcType=VARCHAR},
+      </if>
+      <if test="record.password != null" >
+        PASSWORD = #{record.password,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null" >
+        CREATE_TIME = #{record.createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.expireTime != null" >
+        EXPIRE_TIME = #{record.expireTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.department != null" >
+        DEPARTMENT = #{record.department,jdbcType=VARCHAR},
+      </if>
+      <if test="record.organization != null" >
+        ORGANIZATION = #{record.organization,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idInstitution != null" >
+        ID_INSTITUTION = #{record.idInstitution,jdbcType=VARCHAR},
+      </if>
+      <if test="record.version != null" >
+        VERSION = #{record.version,jdbcType=TINYINT},
+      </if>
+      <if test="record.cdPhone != null" >
+        CD_PHONE = #{record.cdPhone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.userFlag != null" >
+        USER_FLAG = #{record.userFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdFrozenState != null" >
+        CD_FROZEN_STATE = #{record.cdFrozenState,jdbcType=VARCHAR},
+      </if>
+      <if test="record.dtLogin != null" >
+        DT_LOGIN = #{record.dtLogin,jdbcType=DATE},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update users
+    set USER_ID = #{record.userId,jdbcType=VARCHAR},
+      USER_NAME = #{record.userName,jdbcType=VARCHAR},
+      EMAIL = #{record.email,jdbcType=VARCHAR},
+      PASSWORD = #{record.password,jdbcType=VARCHAR},
+      CREATE_TIME = #{record.createTime,jdbcType=TIMESTAMP},
+      EXPIRE_TIME = #{record.expireTime,jdbcType=TIMESTAMP},
+      DEPARTMENT = #{record.department,jdbcType=VARCHAR},
+      ORGANIZATION = #{record.organization,jdbcType=VARCHAR},
+      ID_INSTITUTION = #{record.idInstitution,jdbcType=VARCHAR},
+      VERSION = #{record.version,jdbcType=TINYINT},
+      CD_PHONE = #{record.cdPhone,jdbcType=VARCHAR},
+      USER_FLAG = #{record.userFlag,jdbcType=VARCHAR},
+      CD_FROZEN_STATE = #{record.cdFrozenState,jdbcType=VARCHAR},
+      DT_LOGIN = #{record.dtLogin,jdbcType=DATE}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.User" >
+    update users
+    <set >
+      <if test="userName != null" >
+        USER_NAME = #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        EMAIL = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        PASSWORD = #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="expireTime != null" >
+        EXPIRE_TIME = #{expireTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="department != null" >
+        DEPARTMENT = #{department,jdbcType=VARCHAR},
+      </if>
+      <if test="organization != null" >
+        ORGANIZATION = #{organization,jdbcType=VARCHAR},
+      </if>
+      <if test="idInstitution != null" >
+        ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR},
+      </if>
+      <if test="version != null" >
+        VERSION = #{version,jdbcType=TINYINT},
+      </if>
+      <if test="cdPhone != null" >
+        CD_PHONE = #{cdPhone,jdbcType=VARCHAR},
+      </if>
+      <if test="userFlag != null" >
+        USER_FLAG = #{userFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="cdFrozenState != null" >
+        CD_FROZEN_STATE = #{cdFrozenState,jdbcType=VARCHAR},
+      </if>
+      <if test="dtLogin != null" >
+        DT_LOGIN = #{dtLogin,jdbcType=DATE},
+      </if>
+    </set>
+    where USER_ID = #{userId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.User" >
+    update users
+    set USER_NAME = #{userName,jdbcType=VARCHAR},
+      EMAIL = #{email,jdbcType=VARCHAR},
+      PASSWORD = #{password,jdbcType=VARCHAR},
+      CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},
+      EXPIRE_TIME = #{expireTime,jdbcType=TIMESTAMP},
+      DEPARTMENT = #{department,jdbcType=VARCHAR},
+      ORGANIZATION = #{organization,jdbcType=VARCHAR},
+      ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR},
+      VERSION = #{version,jdbcType=TINYINT},
+      CD_PHONE = #{cdPhone,jdbcType=VARCHAR},
+      USER_FLAG = #{userFlag,jdbcType=VARCHAR},
+      CD_FROZEN_STATE = #{cdFrozenState,jdbcType=VARCHAR},
+      DT_LOGIN = #{dtLogin,jdbcType=DATE}
+    where USER_ID = #{userId,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.User" >
+    insert into users
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      USER_ID,USER_NAME,EMAIL,PASSWORD,CREATE_TIME,EXPIRE_TIME,DEPARTMENT,ORGANIZATION,ID_INSTITUTION,VERSION,CD_PHONE,USER_FLAG,CD_FROZEN_STATE,DT_LOGIN,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.userId,jdbcType=VARCHAR},#{item.userName,jdbcType=VARCHAR},#{item.email,jdbcType=VARCHAR},#{item.password,jdbcType=VARCHAR},#{item.createTime,jdbcType=TIMESTAMP},#{item.expireTime,jdbcType=TIMESTAMP},#{item.department,jdbcType=VARCHAR},#{item.organization,jdbcType=VARCHAR},#{item.idInstitution,jdbcType=VARCHAR},#{item.version,jdbcType=TINYINT},#{item.cdPhone,jdbcType=VARCHAR},#{item.userFlag,jdbcType=VARCHAR},#{item.cdFrozenState,jdbcType=VARCHAR},#{item.dtLogin,jdbcType=DATE},
+      </trim>
+      )
+    </foreach>
+  </insert>
+  <select id="selectByBigOffset" resultMap="BaseResultMap" parameterType="com.sl.entity.User" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from users
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+      <choose >
+        <when test="oredCriteria != null and oredCriteria.size()>0 and criteria.valid" >
+          and
+        </when>
+        <otherwise >
+          where
+        </otherwise>
+      </choose>
+      USER_ID &lt;=(select USER_ID from users
+      <if test="_parameter != null" >
+        <include refid="Example_Where_Clause" />
+      </if>
+      order by USER_ID desc limit #{offset},1) order by USER_ID desc limit #{limit}
+    </if>
+  </select>
+</mapper>

@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.RoleMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.Role" >
+    <id column="ID_INSTITUTION" property="idInstitution" jdbcType="VARCHAR" />
+    <id column="ROLE_ID" property="roleId" jdbcType="VARCHAR" />
+    <result column="ROLE_NAME" property="roleName" jdbcType="VARCHAR" />
+    <result column="VERSION" property="version" jdbcType="TINYINT" />
+    <result column="ROLE_DESC" property="roleDesc" jdbcType="VARCHAR" />
+    <result column="TIMESTAMP" property="timestamp" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_INSTITUTION, ROLE_ID, ROLE_NAME, VERSION, ROLE_DESC, TIMESTAMP
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.RoleExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from roles
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="map" >
+    select 
+    <include refid="Base_Column_List" />
+    from roles
+    where ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and ROLE_ID = #{roleId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="map" >
+    delete from roles
+    where ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and ROLE_ID = #{roleId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.RoleExample" >
+    delete from roles
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.Role" >
+    insert into roles (ID_INSTITUTION, ROLE_ID, ROLE_NAME, 
+      VERSION, ROLE_DESC, TIMESTAMP
+      )
+    values (#{idInstitution,jdbcType=VARCHAR}, #{roleId,jdbcType=VARCHAR}, #{roleName,jdbcType=VARCHAR}, 
+      #{version,jdbcType=TINYINT}, #{roleDesc,jdbcType=VARCHAR}, #{timestamp,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.Role" >
+    insert into roles
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="idInstitution != null" >
+        ID_INSTITUTION,
+      </if>
+      <if test="roleId != null" >
+        ROLE_ID,
+      </if>
+      <if test="roleName != null" >
+        ROLE_NAME,
+      </if>
+      <if test="version != null" >
+        VERSION,
+      </if>
+      <if test="roleDesc != null" >
+        ROLE_DESC,
+      </if>
+      <if test="timestamp != null" >
+        TIMESTAMP,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="idInstitution != null" >
+        #{idInstitution,jdbcType=VARCHAR},
+      </if>
+      <if test="roleId != null" >
+        #{roleId,jdbcType=VARCHAR},
+      </if>
+      <if test="roleName != null" >
+        #{roleName,jdbcType=VARCHAR},
+      </if>
+      <if test="version != null" >
+        #{version,jdbcType=TINYINT},
+      </if>
+      <if test="roleDesc != null" >
+        #{roleDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="timestamp != null" >
+        #{timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update roles
+    <set >
+      <if test="record.idInstitution != null" >
+        ID_INSTITUTION = #{record.idInstitution,jdbcType=VARCHAR},
+      </if>
+      <if test="record.roleId != null" >
+        ROLE_ID = #{record.roleId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.roleName != null" >
+        ROLE_NAME = #{record.roleName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.version != null" >
+        VERSION = #{record.version,jdbcType=TINYINT},
+      </if>
+      <if test="record.roleDesc != null" >
+        ROLE_DESC = #{record.roleDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="record.timestamp != null" >
+        TIMESTAMP = #{record.timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update roles
+    set ID_INSTITUTION = #{record.idInstitution,jdbcType=VARCHAR},
+      ROLE_ID = #{record.roleId,jdbcType=VARCHAR},
+      ROLE_NAME = #{record.roleName,jdbcType=VARCHAR},
+      VERSION = #{record.version,jdbcType=TINYINT},
+      ROLE_DESC = #{record.roleDesc,jdbcType=VARCHAR},
+      TIMESTAMP = #{record.timestamp,jdbcType=TIMESTAMP}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.Role" >
+    update roles
+    <set >
+      <if test="roleName != null" >
+        ROLE_NAME = #{roleName,jdbcType=VARCHAR},
+      </if>
+      <if test="version != null" >
+        VERSION = #{version,jdbcType=TINYINT},
+      </if>
+      <if test="roleDesc != null" >
+        ROLE_DESC = #{roleDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="timestamp != null" >
+        TIMESTAMP = #{timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and ROLE_ID = #{roleId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.Role" >
+    update roles
+    set ROLE_NAME = #{roleName,jdbcType=VARCHAR},
+      VERSION = #{version,jdbcType=TINYINT},
+      ROLE_DESC = #{roleDesc,jdbcType=VARCHAR},
+      TIMESTAMP = #{timestamp,jdbcType=TIMESTAMP}
+    where ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and ROLE_ID = #{roleId,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.Role" >
+    insert into roles
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      ID_INSTITUTION,ROLE_ID,ROLE_NAME,VERSION,ROLE_DESC,TIMESTAMP,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idInstitution,jdbcType=VARCHAR},#{item.roleId,jdbcType=VARCHAR},#{item.roleName,jdbcType=VARCHAR},#{item.version,jdbcType=TINYINT},#{item.roleDesc,jdbcType=VARCHAR},#{item.timestamp,jdbcType=TIMESTAMP},
+      </trim>
+      )
+    </foreach>
+  </insert>
+</mapper>

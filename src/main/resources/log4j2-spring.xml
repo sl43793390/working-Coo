@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  workingCoo 生产级 log4j2 配置（Spring Boot 约定文件名 log4j2-spring.xml，自动加载，
+  application.properties 中的 logging.level.* 仍可覆盖本文件的级别）。
+
+  设计要点：
+  1. 控制台 + 滚动文件双输出；
+  2. 滚动策略：按天 + 按大小（50MB）双触发，压缩归档到 logs/archive/年月/；
+  3. 自动清理：归档超过 30 天自动删除，防止磁盘被日志撑爆；
+  4. immediateFlush=false + 异步 Root（includeLocation=false），高吞吐低损耗；
+  5. 统一 UTF-8 编码，避免 Windows GBK 控制台中文乱码；
+  6. monitorInterval=30：配置文件修改后 30 秒内热生效，无需重启。
+-->
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <Property name="LOG_DIR">logs</Property>
+        <!-- %X{traceId} 由 TraceIdFilter 写入 MDC；过滤器没覆盖到（比如定时任务线程）时输出空串，
+             用 "-" 兜底，免得日志里出现连续两个空格影响 grep。 -->
+        <Property name="PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] [%X{traceId:-}] %-5level %logger{36} - %msg%n</Property>
+        <Property name="CONSOLE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{traceId:-}] [%highlight{%-5level}{WARN=yellow, ERROR=red, INFO=green}] %style{%logger{36}}{cyan} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- 控制台：开发/运维前台查看 -->
+        <Console name="Console" target="SYSTEM_OUT" follow="true">
+            <PatternLayout pattern="${CONSOLE_PATTERN}" charset="UTF-8"/>
+        </Console>
+
+        <!-- 滚动文件：按天+按大小滚动，gzip 压缩归档，30 天自动清理 -->
+        <RollingFile name="File"
+                     fileName="${LOG_DIR}/workingCoo.log"
+                     filePattern="${LOG_DIR}/archive/$${date:yyyy-MM}/workingCoo-%d{yyyy-MM-dd}-%i.log.gz"
+                     append="true"
+                     immediateFlush="false">
+            <PatternLayout pattern="${PATTERN}" charset="UTF-8"/>
+            <Policies>
+                <!-- 每天零点滚动一次（配合 filePattern 中的 %d{yyyy-MM-dd}） -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!-- 单文件超过 50MB 也滚动 -->
+                <SizeBasedTriggeringPolicy size="50 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30">
+                <!-- 清理 30 天前的归档日志 -->
+                <Delete basePath="${LOG_DIR}/archive" maxDepth="2">
+                    <IfFileName glob="*/workingCoo-*.log.gz"/>
+                    <IfLastModified age="30d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- 框架降噪：Spring 保留 INFO 便于观察启动过程，其余框架收敛到 WARN -->
+        <Logger name="org.springframework" level="info"/>
+        <Logger name="org.apache" level="warn"/>
+        <Logger name="org.atmosphere" level="warn"/>
+        <Logger name="io.lettuce" level="warn"/>
+        <Logger name="com.zaxxer.hikari" level="info"/>
+
+        <!-- 异步 Root：生产环境不记录行号（includeLocation=false，性能关键）；
+             需要定位问题时在 application.properties 用 logging.level 临时调级即可 -->
+        <AsyncRoot level="info" includeLocation="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </AsyncRoot>
+    </Loggers>
+
+</Configuration>

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.PermissionMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.Permission" >
+    <id column="PERMISSION_ID" property="permissionId" jdbcType="VARCHAR" />
+    <result column="RESOURCE_NAME" property="resourceName" jdbcType="VARCHAR" />
+    <result column="ACTION" property="action" jdbcType="VARCHAR" />
+    <result column="VERSION" property="version" jdbcType="DECIMAL" />
+    <result column="TIMESTAMP" property="timestamp" jdbcType="TIMESTAMP" />
+    <result column="ID_PARENT" property="idParent" jdbcType="VARCHAR" />
+    <result column="NBR_LEVEL" property="nbrLevel" jdbcType="INTEGER" />
+    <result column="NBR_ORDER" property="nbrOrder" jdbcType="BIGINT" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    PERMISSION_ID, RESOURCE_NAME, ACTION, VERSION, TIMESTAMP, ID_PARENT, NBR_LEVEL, NBR_ORDER
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.PermissionExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from permissions
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from permissions
+    where PERMISSION_ID = #{permissionId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from permissions
+    where PERMISSION_ID = #{permissionId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.PermissionExample" >
+    delete from permissions
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.Permission" >
+    insert into permissions (PERMISSION_ID, RESOURCE_NAME, ACTION, 
+      VERSION, TIMESTAMP, ID_PARENT, 
+      NBR_LEVEL, NBR_ORDER)
+    values (#{permissionId,jdbcType=VARCHAR}, #{resourceName,jdbcType=VARCHAR}, #{action,jdbcType=VARCHAR}, 
+      #{version,jdbcType=DECIMAL}, #{timestamp,jdbcType=TIMESTAMP}, #{idParent,jdbcType=VARCHAR}, 
+      #{nbrLevel,jdbcType=INTEGER}, #{nbrOrder,jdbcType=BIGINT})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.Permission" >
+    insert into permissions
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="permissionId != null" >
+        PERMISSION_ID,
+      </if>
+      <if test="resourceName != null" >
+        RESOURCE_NAME,
+      </if>
+      <if test="action != null" >
+        ACTION,
+      </if>
+      <if test="version != null" >
+        VERSION,
+      </if>
+      <if test="timestamp != null" >
+        TIMESTAMP,
+      </if>
+      <if test="idParent != null" >
+        ID_PARENT,
+      </if>
+      <if test="nbrLevel != null" >
+        NBR_LEVEL,
+      </if>
+      <if test="nbrOrder != null" >
+        NBR_ORDER,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="permissionId != null" >
+        #{permissionId,jdbcType=VARCHAR},
+      </if>
+      <if test="resourceName != null" >
+        #{resourceName,jdbcType=VARCHAR},
+      </if>
+      <if test="action != null" >
+        #{action,jdbcType=VARCHAR},
+      </if>
+      <if test="version != null" >
+        #{version,jdbcType=DECIMAL},
+      </if>
+      <if test="timestamp != null" >
+        #{timestamp,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idParent != null" >
+        #{idParent,jdbcType=VARCHAR},
+      </if>
+      <if test="nbrLevel != null" >
+        #{nbrLevel,jdbcType=INTEGER},
+      </if>
+      <if test="nbrOrder != null" >
+        #{nbrOrder,jdbcType=BIGINT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update permissions
+    <set >
+      <if test="record.permissionId != null" >
+        PERMISSION_ID = #{record.permissionId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.resourceName != null" >
+        RESOURCE_NAME = #{record.resourceName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.action != null" >
+        ACTION = #{record.action,jdbcType=VARCHAR},
+      </if>
+      <if test="record.version != null" >
+        VERSION = #{record.version,jdbcType=DECIMAL},
+      </if>
+      <if test="record.timestamp != null" >
+        TIMESTAMP = #{record.timestamp,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.idParent != null" >
+        ID_PARENT = #{record.idParent,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nbrLevel != null" >
+        NBR_LEVEL = #{record.nbrLevel,jdbcType=INTEGER},
+      </if>
+      <if test="record.nbrOrder != null" >
+        NBR_ORDER = #{record.nbrOrder,jdbcType=BIGINT},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update permissions
+    set PERMISSION_ID = #{record.permissionId,jdbcType=VARCHAR},
+      RESOURCE_NAME = #{record.resourceName,jdbcType=VARCHAR},
+      ACTION = #{record.action,jdbcType=VARCHAR},
+      VERSION = #{record.version,jdbcType=DECIMAL},
+      TIMESTAMP = #{record.timestamp,jdbcType=TIMESTAMP},
+      ID_PARENT = #{record.idParent,jdbcType=VARCHAR},
+      NBR_LEVEL = #{record.nbrLevel,jdbcType=INTEGER},
+      NBR_ORDER = #{record.nbrOrder,jdbcType=BIGINT}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.Permission" >
+    update permissions
+    <set >
+      <if test="resourceName != null" >
+        RESOURCE_NAME = #{resourceName,jdbcType=VARCHAR},
+      </if>
+      <if test="action != null" >
+        ACTION = #{action,jdbcType=VARCHAR},
+      </if>
+      <if test="version != null" >
+        VERSION = #{version,jdbcType=DECIMAL},
+      </if>
+      <if test="timestamp != null" >
+        TIMESTAMP = #{timestamp,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idParent != null" >
+        ID_PARENT = #{idParent,jdbcType=VARCHAR},
+      </if>
+      <if test="nbrLevel != null" >
+        NBR_LEVEL = #{nbrLevel,jdbcType=INTEGER},
+      </if>
+      <if test="nbrOrder != null" >
+        NBR_ORDER = #{nbrOrder,jdbcType=BIGINT},
+      </if>
+    </set>
+    where PERMISSION_ID = #{permissionId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.Permission" >
+    update permissions
+    set RESOURCE_NAME = #{resourceName,jdbcType=VARCHAR},
+      ACTION = #{action,jdbcType=VARCHAR},
+      VERSION = #{version,jdbcType=DECIMAL},
+      TIMESTAMP = #{timestamp,jdbcType=TIMESTAMP},
+      ID_PARENT = #{idParent,jdbcType=VARCHAR},
+      NBR_LEVEL = #{nbrLevel,jdbcType=INTEGER},
+      NBR_ORDER = #{nbrOrder,jdbcType=BIGINT}
+    where PERMISSION_ID = #{permissionId,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.Permission" >
+    insert into permissions
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      PERMISSION_ID,RESOURCE_NAME,ACTION,VERSION,TIMESTAMP,ID_PARENT,NBR_LEVEL,NBR_ORDER,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.permissionId,jdbcType=VARCHAR},#{item.resourceName,jdbcType=VARCHAR},#{item.action,jdbcType=VARCHAR},#{item.version,jdbcType=DECIMAL},#{item.timestamp,jdbcType=TIMESTAMP},#{item.idParent,jdbcType=VARCHAR},#{item.nbrLevel,jdbcType=INTEGER},#{item.nbrOrder,jdbcType=BIGINT},
+      </trim>
+      )
+    </foreach>
+  </insert>
+  <select id="selectByBigOffset" resultMap="BaseResultMap" parameterType="com.sl.entity.Permission" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from permissions
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+      <choose >
+        <when test="oredCriteria != null and oredCriteria.size()>0 and criteria.valid" >
+          and
+        </when>
+        <otherwise >
+          where
+        </otherwise>
+      </choose>
+      PERMISSION_ID &lt;=(select PERMISSION_ID from permissions
+      <if test="_parameter != null" >
+        <include refid="Example_Where_Clause" />
+      </if>
+      order by PERMISSION_ID desc limit #{offset},1) order by PERMISSION_ID desc limit #{limit}
+    </if>
+  </select>
+</mapper>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.OperationLogMapper" >
+
+  <resultMap id="BaseResultMap" type="com.sl.entity.OperationLog" >
+    <id column="ID_LOG" property="idLog" jdbcType="VARCHAR" />
+    <result column="ID_USER" property="idUser" jdbcType="VARCHAR" />
+    <result column="NAME_USER" property="nameUser" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="CD_BIZ_TYPE" property="cdBizType" jdbcType="VARCHAR" />
+    <result column="ID_BIZ" property="idBiz" jdbcType="VARCHAR" />
+    <result column="CD_ACTION" property="cdAction" jdbcType="VARCHAR" />
+    <result column="CD_DETAIL" property="cdDetail" jdbcType="VARCHAR" />
+    <result column="DT_OPERATION" property="dtOperation" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    ID_LOG, ID_USER, NAME_USER, ID_PROJECT, CD_BIZ_TYPE, ID_BIZ, CD_ACTION, CD_DETAIL, DT_OPERATION
+  </sql>
+
+  <insert id="insert" parameterType="com.sl.entity.OperationLog" >
+    insert into operation_log (ID_LOG, ID_USER, NAME_USER, ID_PROJECT, CD_BIZ_TYPE,
+      ID_BIZ, CD_ACTION, CD_DETAIL, DT_OPERATION)
+    values (#{idLog,jdbcType=VARCHAR}, #{idUser,jdbcType=VARCHAR}, #{nameUser,jdbcType=VARCHAR},
+      #{idProject,jdbcType=VARCHAR}, #{cdBizType,jdbcType=VARCHAR}, #{idBiz,jdbcType=VARCHAR},
+      #{cdAction,jdbcType=VARCHAR}, #{cdDetail,jdbcType=VARCHAR}, #{dtOperation,jdbcType=TIMESTAMP})
+  </insert>
+
+  <select id="selectByBiz" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    from operation_log
+    where CD_BIZ_TYPE = #{cdBizType,jdbcType=VARCHAR}
+      and ID_BIZ = #{idBiz,jdbcType=VARCHAR}
+    order by DT_OPERATION desc
+    limit #{limit}
+  </select>
+
+  <select id="selectByProject" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    from operation_log
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+    order by DT_OPERATION desc
+    limit #{limit}
+  </select>
+
+</mapper>

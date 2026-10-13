@@ -1,0 +1,742 @@
+@import url('line-awesome/dist/line-awesome/css/line-awesome.min.css');
+
+
+	/* List view */
+.list-view .content {
+	 display: flex;
+}
+.list-view-horizontalLayout {
+	 display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	width: 100%;
+/* 	 --lumo-space-m: 0.25rem; */
+	 --lumo-space-m: 0.5rem;
+}
+.list-view .contact-grid {
+		display:flex;
+	 flex: 2;
+}
+.back-ground-blue {
+	background-color: #a5bcff;
+}
+.back-ground-blue {
+	background-color: #a5bcff;
+}
+
+.width-style-150px {
+	width: 150px !important;
+}
+.width-style-200px {
+	width: 200px !important;
+}
+
+.vaadin-button-back {
+	background-color: #409EFF;
+	width: 90px ;
+	height: 30px;
+	font-size: 14px;
+    font-weight: normal;
+}
+.lb-title {
+	font-size: 18px;
+	font-weight: bold;
+}
+.lb-width-common {
+    width: 100px;
+    text-align: center;
+    margin-top: 7px;
+}
+
+vaadin-grid-cell-content {
+/* 	border: 1px solid #e7dede; */
+	border-right: 1px solid #e7e7e7;
+    text-align: center;
+}
+
+tr[role="row"] {
+	 border-bottom: 1px solid #e9e9e9;
+}
+/* ============================================================
+   侧边栏手风琴导航（nav-accordion / nav-menu-btn）
+   ============================================================ */
+.nav-accordion {
+	width: 100%;
+	background: transparent;
+	font-weight: 600;
+	color: #ffffff;            /* 深蓝抽屉上的纯白文字 */
+}
+
+/* 面板：透明底融入深蓝抽屉，面板之间留缝 */
+.nav-accordion vaadin-accordion-panel {
+	background: transparent;
+	border: none;
+	margin: 5px 6px;
+	border-radius: 8px;
+	overflow: hidden;
+}
+/* 根菜单标题：这个版本的 Vaadin 摘要行不是 part="summary"（不存在该 part），
+   而是 panel 的 light-DOM 子元素 vaadin-accordion-heading，其 shadow 里是
+   button[part=content] + span[part=toggle]。背景/文字色设在 heading 元素上
+   （文档级规则优先于组件内部 ：host 规则），padding 设在 part(content) 上，
+   箭头色用 heading 的 part(toggle)。透明底融入深蓝抽屉，白字，不加彩色底。 */
+.nav-accordion vaadin-accordion-heading {
+	background: transparent;
+	color: #ffffff;
+	font-weight: 600;
+	font-size: 15px;
+}
+.nav-accordion vaadin-accordion-heading::part(content) {
+	padding: 0 var(--lumo-space-s);
+	min-height: 40px;
+}
+.nav-accordion vaadin-accordion-heading::part(toggle) {
+	color: rgba(255, 255, 255, 0.85);
+}
+/* 悬停/展开：半透明白高亮（heading 是 panel 的子元素，:hover 直接挂在它身上） */
+.nav-accordion vaadin-accordion-heading:hover,
+.nav-accordion vaadin-accordion-panel[opened] vaadin-accordion-heading {
+	background: rgba(255, 255, 255, 0.10);
+}
+.nav-accordion vaadin-accordion-panel::part(content) {
+	background: transparent;   /* 透出深蓝抽屉底，别保留 Lumo 默认白底 */
+	padding: 0 var(--lumo-space-xs) var(--lumo-space-xs) var(--lumo-space-xs);
+}
+
+/* 菜单项按钮：全宽、左对齐、悬停浅蓝高亮 */
+.nav-menu-btn {
+	width: 100%;
+	margin: 2px 0;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: normal;
+	color: #ffffff;            /* 深蓝抽屉上的纯白文字 */
+	justify-content: flex-start;
+}
+/* vaadin-button 的宿主是 inline-block，真正排版在 shadow 里的
+   .vaadin-button-container（justify-content: center）——宿主上的
+   justify-content 无效。让 label 撑满容器再左对齐，文字才能贴左 */
+.nav-menu-btn::part(label) {
+	flex: 1;
+	justify-content: flex-start;
+	text-align: left;
+	padding-left: 22px;
+}
+/* 悬停/按下：深蓝底上半透明白，不用浅蓝底（会和抽屉糊在一起） */
+.nav-menu-btn:hover {
+	background: rgba(255, 255, 255, 0.14);
+	color: #ffffff;
+}
+.nav-menu-btn:active {
+	background: rgba(255, 255, 255, 0.24);
+}
+
+/* ============================================================
+   主区 TabSheet（main-tabsheet）：无边框、选中高亮
+   ============================================================ */
+.main-tabsheet vaadin-tab {
+	border: none;
+	background: transparent;
+	border-radius: 6px 6px 0 0;
+	margin: 4px 2px 0 0;
+	padding: 0 var(--lumo-space-m);
+	height: 34px;
+	color: #606266;
+	font-size: 14px;
+}
+
+/* ============================================================
+   Tab 内容区滚动（修复任务详情等超长页面被切断）
+   根因：整个主界面位于 AppLayout 的 navbar 里，而 Vaadin 的
+   [part='navbar'] 是 position:fixed —— 内容超过视口高度时
+   页面无法滚动，底部内容永远不可见。
+   这里把 Tab 内容区限制在视口内（视口高度减去顶栏 48px、
+   间距与 tab 头约 70px），超高时在内容区内部滚动，tab 头保持可见。
+   ============================================================ */
+.main-tabsheet::part(content) {
+	max-height: calc(100vh - 120px);
+	overflow-y: auto;
+}
+.main-tabsheet vaadin-tab:hover {
+	color: var(--lumo-primary-color);
+	background: #f5f7fa;
+}
+.main-tabsheet vaadin-tab[selected] {
+	color: var(--lumo-primary-color);
+	font-weight: 600;
+	background: transparent;
+}
+
+.tab-title-label {
+	font-size: 14px;
+	line-height: 1;
+}
+
+/* tab 头上的关闭按钮：小圆钮，悬停变红 */
+.tab-header-close-btn {
+	height: 18px;
+	width: 18px;
+	min-width: 18px;
+	padding: 0;
+	margin: 0 0 0 2px;
+	border-radius: 50%;
+	color: #a8abb2;
+	background: transparent;
+	cursor: pointer;
+}
+.tab-header-close-btn:hover {
+	color: #f56c6c;
+	background: #fde2e2;
+}
+
+/* ============================================================
+   AppLayout 抽屉：宽度 + 与浏览器边缘留缝
+   不能直接给 drawer 设 left/top 偏移——Vaadin 源码里 navbar 的
+   偏移量 = drawer 实际宽度（mixin 里按 drawerRect.width 写入），
+   挪动 drawer 会让顶部栏盖住抽屉右缘。所以用「drawer 内缩 padding
+   + 内部白色卡片」的方式留缝，偏移量依旧吻合，开合动画不受影响。
+   ============================================================ */
+.app-drawer {
+	--vaadin-app-layout-drawer-width: 230px;
+}
+.app-drawer::part(drawer) {
+	background: #3270aa;      /* 深蓝底（沿用 .dark-background 色值），整个左侧菜单统一蓝底 */
+	padding: 10px;
+	box-sizing: border-box;
+	/* 菜单全展开超出视口高度时在抽屉内出纵向滚动条 */
+	overflow-y: auto;
+	scrollbar-width: thin;
+}
+.drawer-card {
+	width: 100%;
+	/* 高度跟随内容增长，内容不足一屏时至少撑满；
+	   原来写死 height:100%，配合主题组件 CSS 的 flex-wrap:wrap，
+	   菜单全展开后整列被「换列」到 logo 右侧（列布局的 wrap 是横向换列） */
+	height: auto;
+	min-height: 100%;
+	background: transparent;   /* 卡片透明，透出抽屉深蓝，不再有白色卡片 */
+	border-radius: 0;
+	box-shadow: none;
+	/* 不能设 overflow:hidden——菜单超高会被直接剪掉，抽屉的滚动条也永远出不来；
+	   溢出交给 .app-drawer::part(drawer) 的 overflow-y:auto 处理 */
+	/* components/vaadin-vertical-layout.css 给所有竖向布局设了 space-between，
+	   会让 logo 和菜单被撑到卡片两端，这里拉回顶部对齐；
+	   wrap 必须禁掉：菜单超高会把整列菜单换到 logo 右边 */
+	justify-content: flex-start;
+	flex-wrap: nowrap;
+}
+
+.dark-background {
+	background-color: #1B445A;
+	color: white;
+}
+
+/* ============================================================
+   列表空态提示（empty-hint）
+   Vaadin 的 Grid 没有内置空态，没数据时页面只剩空表格，
+   用户分不清是「确实没数据」还是「加载失败」。
+   ============================================================ */
+.empty-hint {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	padding: 28px 16px;
+	margin: 4px 0;
+	border: 1px dashed #dcdfe6;
+	border-radius: 8px;
+	background: #fafcff;
+	color: #909399;
+	font-size: 14px;
+}
+
+/* ============================================================
+   窄屏适配：小屏时放宽固定宽度，避免横向溢出
+   ============================================================ */
+@media (max-width: 1024px) {
+	.app-drawer {
+		--vaadin-app-layout-drawer-width: 180px;
+	}
+	.empty-hint {
+		font-size: 13px;
+		padding: 20px 12px;
+	}
+}
+
+
+
+
+
+/* ============================================================
+   任务看板（kanban-*，TaskKanbanComponent）
+   横向列排布 + 纵向卡片列表，列内可滚动
+   ============================================================ */
+.kanban-board {
+	align-items: flex-start;
+	/* 主题组件 CSS（components/vaadin-horizontal-layout.css）给所有横向布局
+	   设了 justify-content: space-between + flex-wrap: wrap，会把列推到看板
+	   两端、列多时还会换行（overflow-x 滚动随之失效）。
+	   文档级类选择器优先于 shadow 内的 :host 规则，这里拉回「从左排列、不换行」。
+	   同 .drawer-card 的处理思路。 */
+	justify-content: flex-start;
+	flex-wrap: nowrap;
+	gap: 16px;
+	overflow-x: auto;
+	padding-bottom: 8px;
+}
+.kanban-column {
+	flex-shrink: 0;              /* 固定 280px 宽，不被挤压 */
+	flex-wrap: nowrap;           /* 组件 CSS 给竖向布局也设了 wrap，列有 max-height，卡片多时会竖向换行 */
+	background: #f4f6f9;
+	border: 1px solid #e4e9f0;
+	border-radius: 10px;
+	padding: 12px;
+	max-height: calc(100vh - 280px);
+}
+.kanban-column-header {
+	margin-bottom: 10px;
+	padding: 2px 4px;
+}
+.kanban-column-title {
+	font-weight: 600;
+	font-size: 15px;
+	color: #303133;
+}
+.kanban-column-count {
+	min-width: 22px;
+	text-align: center;
+	padding: 1px 8px;
+	border-radius: 10px;
+	background: #e8edf3;
+	color: #606266;
+	font-size: 12px;
+}
+.kanban-column-body {
+	gap: 10px;
+	overflow-y: auto;
+	min-height: 60px;
+	flex-wrap: nowrap;           /* 同上，卡片只许纵向下滑，不许多列折行 */
+}
+.kanban-card {
+	gap: 5px;
+	background: #ffffff;
+	border: 1px solid #e4e9f0;
+	border-left: 3px solid #409eff;
+	border-radius: 8px;
+	padding: 10px 12px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	cursor: grab;
+}
+.kanban-card:hover {
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.10);
+}
+.kanban-card-dragging {
+	opacity: 0.45;
+	border-style: dashed;
+}
+.kanban-card-title {
+	font-weight: 600;
+	font-size: 14px;
+	color: #303133;
+	cursor: pointer;
+}
+.kanban-card-title:hover {
+	color: var(--lumo-primary-color);
+}
+.kanban-card-meta {
+	font-size: 12px;
+	color: #909399;
+}
+.kanban-card-due {
+	font-size: 12px;
+	color: #909399;
+}
+.kanban-card-due-overdue {
+	font-size: 12px;
+	color: #f56c6c;
+	font-weight: 600;
+}
+
+/* ============================================================
+   甘特图（gantt-*，TaskGanttComponent）
+   左列固定任务名，右侧时间轴，条形按百分比绝对定位
+   ============================================================ */
+.gantt-area {
+    overflow-x: auto;              /* 极端窄屏保留滚动能力 */
+    scrollbar-width: none;         /* Firefox：不显示横向滚动条 */
+    -ms-overflow-style: none;      /* 旧 Edge */
+    padding-bottom: 8px;
+}
+.gantt-area::-webkit-scrollbar {   /* Chrome/Edge/Safari：不显示横向滚动条 */
+    display: none;
+}
+.gantt-header {
+    align-items: center;
+    border-bottom: 2px solid #e4e9f0;
+    min-width: 720px;
+}
+.gantt-label-cell {
+	flex-shrink: 0;
+	width: 170px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 13px;
+	color: #606266;
+}
+.gantt-scale {
+    flex: 1;
+    position: relative;          /* 「今天」竖线的定位基准 */
+}
+.gantt-tick {
+    text-align: center;
+    font-size: 12px;
+    color: #909399;
+    overflow: hidden;
+    white-space: nowrap;
+}
+/* 当天刻度：加粗变绿，和今天竖线同一色系 */
+.gantt-tick-today {
+    color: #0f9d58;
+    font-weight: 700;
+}
+/* 「今天」竖线：贯穿表头刻度区和每一行，绿色半透明不挡条形文字 */
+.gantt-today-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(15, 157, 88, 0.9);
+    pointer-events: none;
+    z-index: 1;
+}
+.gantt-row {
+    align-items: center;
+    min-width: 720px;
+    border-bottom: 1px solid #f0f2f5;
+    min-height: 38px;
+}
+.gantt-row:hover {
+	background: #f5f9ff;
+}
+.gantt-track {
+	flex: 1;
+	position: relative;          /* 甘特条 left/width 定位的基准 */
+	height: 38px;
+}
+.gantt-bar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 20px;
+    line-height: 20px;
+    border-radius: 4px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    /* border-box：padding 含在 width 百分比内。默认 content-box 下长条会溢出
+       16px，把整个 .gantt-area 撑出横向滚动条 */
+    box-sizing: border-box;
+}
+.gantt-bar-normal {
+	background: #409eff;
+}
+.gantt-bar-done {
+	background: #67c23a;
+}
+.gantt-bar-stopped {
+	background: #909399;
+}
+.gantt-bar-overdue {
+	background: #f56c6c;
+}
+/* blocked 要盖过上面的状态色，放在最后 */
+.gantt-bar-blocked {
+	background: #e6a23c;
+}
+.gantt-tip {
+	font-size: 12px;
+	color: #e6a23c;
+	padding: 4px 0;
+}
+
+/* ============================================================
+   任务统计分析（stat-*，TaskStatisticsComponent）
+   指标卡 + 纯 CSS 条形分布图
+   ============================================================ */
+.stat-cards {
+	gap: 16px;
+}
+.stat-card {
+	flex: 1;
+	gap: 4px;
+	background: #ffffff;
+	border: 1px solid #e4e9f0;
+	border-radius: 10px;
+	padding: 16px;
+	border-left-width: 4px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.stat-card-value {
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+.stat-card-label {
+	font-size: 13px;
+	color: #909399;
+}
+.stat-card-blue {
+	border-left-color: #409eff;
+}
+.stat-card-blue .stat-card-value {
+	color: #409eff;
+}
+.stat-card-green {
+	border-left-color: #67c23a;
+}
+.stat-card-green .stat-card-value {
+	color: #67c23a;
+}
+.stat-card-gray {
+	border-left-color: #909399;
+}
+.stat-card-gray .stat-card-value {
+	color: #909399;
+}
+.stat-card-red {
+	border-left-color: #f56c6c;
+}
+.stat-card-red .stat-card-value {
+	color: #f56c6c;
+}
+.stat-section-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: #303133;
+	padding: 8px 0 2px;
+	border-bottom: 1px solid #f0f2f5;
+}
+.stat-bars {
+	gap: 8px;
+	padding-top: 6px;
+}
+.stat-bar-row {
+	gap: 12px;
+	min-height: 24px;
+}
+.stat-bar-label {
+	flex-shrink: 0;
+	width: 110px;
+	text-align: right;
+	font-size: 13px;
+	color: #606266;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.stat-bar-track {
+	flex: 1;
+	height: 14px;
+	background: #f2f4f8;
+	border-radius: 7px;
+	overflow: hidden;
+}
+.stat-bar-fill {
+	display: block;
+	height: 14px;
+	border-radius: 7px;
+	background: #409eff;
+	min-width: 4px;
+	transition: width 0.3s ease;
+}
+.stat-bar-value {
+	flex-shrink: 0;
+	min-width: 28px;
+	font-size: 13px;
+	color: #303133;
+	font-weight: 600;
+}
+/* 状态维度配色 */
+.stat-fill-status-未开始 {
+	background: #909399;
+}
+.stat-fill-status-进行中 {
+	background: #409eff;
+}
+.stat-fill-status-已结束 {
+	background: #67c23a;
+}
+.stat-fill-status-已中断 {
+	background: #e6a23c;
+}
+.stat-fill-status-已废弃 {
+	background: #c0c4cc;
+}
+.stat-fill-status-未分配 {
+	background: #dcdfe6;
+}
+/* 优先级维度配色 */
+.stat-fill-prior-高 {
+	background: #f56c6c;
+}
+.stat-fill-prior-中 {
+	background: #e6a23c;
+}
+.stat-fill-prior-低 {
+	background: #67c23a;
+}
+.stat-fill-user {
+	background: #8f7ff0;
+}
+
+
+/* ============================================================
+   Quill 富文本编辑器（quill-editor，QuillEditor.java + quill-editor.js）
+   组件高度由外部控制：工具栏贴顶，编辑区占满剩余空间并内部滚动
+   ============================================================ */
+quill-editor {
+	border: 1px solid #dcdfe6;
+	border-radius: 8px;
+	overflow: hidden;
+	background: #ffffff;
+}
+quill-editor:focus-within {
+	border-color: var(--lumo-primary-color);
+}
+quill-editor .ql-toolbar.ql-snow {
+	flex: none;
+	border: none;
+	border-bottom: 1px solid #eef0f3;
+}
+quill-editor .ql-container.ql-snow {
+	flex: 1 1 auto;
+	border: none;
+	overflow-y: auto;
+	font-size: 14px;
+}
+quill-editor .ql-editor {
+	min-height: 120px;
+}
+quill-editor .ql-editor.ql-blank::before {
+	color: #a8abb2;
+	font-style: normal;
+}
+
+/* ============================================================
+   日程日历（schedule-calendar，ScheduleComponent / FullCalendar for Flow）
+   1) 日期数字加粗放大（月视图格子右上角 / 周、日网格视图日期头）
+   2) 今天的日期文字深蓝色，并在日期后跟一个深蓝「今天」小徽章
+   ============================================================ */
+.schedule-calendar .fc-daygrid-day-number {
+	font-weight: 700;
+	font-size: 1.15em;
+}
+.schedule-calendar .fc-day-today .fc-daygrid-day-number {
+	color: #0b3d91;
+}
+.schedule-calendar .fc-day-today .fc-daygrid-day-number::after {
+	content: "今天";
+	margin-left: 4px;
+	padding: 1px 6px;
+	border-radius: 8px;
+	background: #0b3d91;
+	color: #ffffff;
+	font-size: 0.72em;
+	font-weight: 600;
+	vertical-align: middle;
+}
+/* 周 / 日时间轴视图：顶部今天那一列的列头也标深蓝 + 「今天」 */
+.schedule-calendar .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
+	color: #0b3d91;
+	font-weight: 700;
+}
+.schedule-calendar .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion::after {
+	content: " 今天";
+	font-size: 0.8em;
+}
+
+/* ============================================================
+   待办清单（todo-*，ScheduleComponent 自研面板，替代 FC listWeek）
+   FC list 视图只列一周，且跨天事件按天拆行、中间日只剩 allDayText，
+   看不到完整起止时间；这里全量渲染，每条完整显示起止 + 共 N 天
+   ============================================================ */
+.todo-section {
+	font-size: 13px;
+	font-weight: 700;
+	color: #606266;
+	margin: 12px 0 2px;
+}
+.todo-item {
+	justify-content: flex-start;   /* 组件 CSS 默认 space-between，会把色点和内容推到两端 */
+	flex-wrap: nowrap;
+	gap: 12px;
+	background: #ffffff;
+	border: 1px solid #e4e9f0;
+	border-left: 3px solid #1676f3;
+	border-radius: 8px;
+	padding: 10px 14px;
+	box-sizing: border-box;
+}
+.todo-item:hover {
+	border-color: #1676f3;
+	background: #f5f9ff;
+}
+/* 已过期：置灰 + 左侧色条变灰，仍可点开查看/编辑 */
+.todo-item-past {
+	opacity: 0.62;
+	border-left-color: #a8abb2;
+}
+.todo-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.todo-dot-timed {
+	background: #1676f3;
+}
+.todo-dot-allday {
+	background: #0f9d58;
+}
+.todo-title {
+	font-size: 14px;
+	font-weight: 600;
+	color: #303133;
+}
+.todo-time {
+	font-size: 12px;
+	color: #909399;
+}
+.todo-desc {
+	font-size: 12px;
+	color: #606266;
+}
+.todo-empty {
+	color: #909399;
+	font-size: 13px;
+	padding: 24px 0;
+}
+
+/* ============================================================
+   通知铃铛未读红点（NotificationBell）
+   vaadin-button 的内容在 shadow DOM 里，必须走 ::part(label)；
+   之前只 addClassName("notification-bell-unread") 却没写样式，
+   未读数一直是普通黑字。数字 >99 时按钮文本为 "99+"。
+   ============================================================ */
+.notification-bell-unread::part(label) {
+	color: #ffffff;
+	background: #f56c6c;
+	border-radius: 10px;
+	padding: 0 6px;
+	margin-left: 2px;
+	font-size: 12px;
+	font-weight: 600;
+	min-width: 18px;
+	text-align: center;
+	box-sizing: border-box;
+}

@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.TaskBugfixMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.TaskBugfix" >
+    <id column="ID_TASK" property="idTask" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="NAME_TASK" property="nameTask" jdbcType="VARCHAR" />
+    <result column="CD_TASK_TYPE" property="cdTaskType" jdbcType="VARCHAR" />
+    <result column="CD_TASK_TAG" property="cdTaskTag" jdbcType="VARCHAR" />
+    <result column="CD_STATUS" property="cdStatus" jdbcType="VARCHAR" />
+    <result column="DT_CREATE" property="dtCreate" jdbcType="TIMESTAMP" />
+    <result column="DT_END" property="dtEnd" jdbcType="TIMESTAMP" />
+    <result column="ID_CREATE_USER" property="idCreateUser" jdbcType="VARCHAR" />
+    <result column="CD_DESCRIPTION" property="cdDescription" jdbcType="VARCHAR" />
+    <result column="NAME_TESTER" property="nameTester" jdbcType="VARCHAR" />
+    <result column="DT_FIXED" property="dtFixed" jdbcType="TIMESTAMP" />
+    <result column="CD_BUG_REASON" property="cdBugReason" jdbcType="VARCHAR" />
+    <result column="CD_SEVERITY" property="cdSeverity" jdbcType="VARCHAR" />
+    <result column="CD_MODUAL" property="cdModual" jdbcType="VARCHAR" />
+    <result column="NAME_SYSTEM" property="nameSystem" jdbcType="VARCHAR" />
+    <result column="CD_SUSPEND" property="cdSuspend" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_TASK, ID_PROJECT, NAME_TASK, CD_TASK_TYPE, CD_TASK_TAG, CD_STATUS, DT_CREATE, 
+    DT_END, ID_CREATE_USER, CD_DESCRIPTION, NAME_TESTER, DT_FIXED, CD_BUG_REASON, CD_SEVERITY, 
+    CD_MODUAL, NAME_SYSTEM, CD_SUSPEND
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.TaskBugfixExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from task_bugfix
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from task_bugfix
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from task_bugfix
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.TaskBugfixExample" >
+    delete from task_bugfix
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.TaskBugfix" >
+    insert into task_bugfix (ID_TASK, ID_PROJECT, NAME_TASK, 
+      CD_TASK_TYPE, CD_TASK_TAG, CD_STATUS, 
+      DT_CREATE, DT_END, ID_CREATE_USER, 
+      CD_DESCRIPTION, NAME_TESTER, DT_FIXED, 
+      CD_BUG_REASON, CD_SEVERITY, CD_MODUAL, 
+      NAME_SYSTEM, CD_SUSPEND)
+    values (#{idTask,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}, #{nameTask,jdbcType=VARCHAR}, 
+      #{cdTaskType,jdbcType=VARCHAR}, #{cdTaskTag,jdbcType=VARCHAR}, #{cdStatus,jdbcType=VARCHAR}, 
+      #{dtCreate,jdbcType=TIMESTAMP}, #{dtEnd,jdbcType=TIMESTAMP}, #{idCreateUser,jdbcType=VARCHAR}, 
+      #{cdDescription,jdbcType=VARCHAR}, #{nameTester,jdbcType=VARCHAR}, #{dtFixed,jdbcType=TIMESTAMP}, 
+      #{cdBugReason,jdbcType=VARCHAR}, #{cdSeverity,jdbcType=VARCHAR}, #{cdModual,jdbcType=VARCHAR}, 
+      #{nameSystem,jdbcType=VARCHAR}, #{cdSuspend,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.TaskBugfix" >
+    insert into task_bugfix
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="idTask != null" >
+        ID_TASK,
+      </if>
+      <if test="idProject != null" >
+        ID_PROJECT,
+      </if>
+      <if test="nameTask != null" >
+        NAME_TASK,
+      </if>
+      <if test="cdTaskType != null" >
+        CD_TASK_TYPE,
+      </if>
+      <if test="cdTaskTag != null" >
+        CD_TASK_TAG,
+      </if>
+      <if test="cdStatus != null" >
+        CD_STATUS,
+      </if>
+      <if test="dtCreate != null" >
+        DT_CREATE,
+      </if>
+      <if test="dtEnd != null" >
+        DT_END,
+      </if>
+      <if test="idCreateUser != null" >
+        ID_CREATE_USER,
+      </if>
+      <if test="cdDescription != null" >
+        CD_DESCRIPTION,
+      </if>
+      <if test="nameTester != null" >
+        NAME_TESTER,
+      </if>
+      <if test="dtFixed != null" >
+        DT_FIXED,
+      </if>
+      <if test="cdBugReason != null" >
+        CD_BUG_REASON,
+      </if>
+      <if test="cdSeverity != null" >
+        CD_SEVERITY,
+      </if>
+      <if test="cdModual != null" >
+        CD_MODUAL,
+      </if>
+      <if test="nameSystem != null" >
+        NAME_SYSTEM,
+      </if>
+      <if test="cdSuspend != null" >
+        CD_SUSPEND,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="idTask != null" >
+        #{idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="idProject != null" >
+        #{idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="nameTask != null" >
+        #{nameTask,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTaskType != null" >
+        #{cdTaskType,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTaskTag != null" >
+        #{cdTaskTag,jdbcType=VARCHAR},
+      </if>
+      <if test="cdStatus != null" >
+        #{cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="dtCreate != null" >
+        #{dtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dtEnd != null" >
+        #{dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idCreateUser != null" >
+        #{idCreateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="cdDescription != null" >
+        #{cdDescription,jdbcType=VARCHAR},
+      </if>
+      <if test="nameTester != null" >
+        #{nameTester,jdbcType=VARCHAR},
+      </if>
+      <if test="dtFixed != null" >
+        #{dtFixed,jdbcType=TIMESTAMP},
+      </if>
+      <if test="cdBugReason != null" >
+        #{cdBugReason,jdbcType=VARCHAR},
+      </if>
+      <if test="cdSeverity != null" >
+        #{cdSeverity,jdbcType=VARCHAR},
+      </if>
+      <if test="cdModual != null" >
+        #{cdModual,jdbcType=VARCHAR},
+      </if>
+      <if test="nameSystem != null" >
+        #{nameSystem,jdbcType=VARCHAR},
+      </if>
+      <if test="cdSuspend != null" >
+        #{cdSuspend,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update task_bugfix
+    <set >
+      <if test="record.idTask != null" >
+        ID_TASK = #{record.idTask,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idProject != null" >
+        ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameTask != null" >
+        NAME_TASK = #{record.nameTask,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdTaskType != null" >
+        CD_TASK_TYPE = #{record.cdTaskType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdTaskTag != null" >
+        CD_TASK_TAG = #{record.cdTaskTag,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdStatus != null" >
+        CD_STATUS = #{record.cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.dtCreate != null" >
+        DT_CREATE = #{record.dtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.dtEnd != null" >
+        DT_END = #{record.dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.idCreateUser != null" >
+        ID_CREATE_USER = #{record.idCreateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdDescription != null" >
+        CD_DESCRIPTION = #{record.cdDescription,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameTester != null" >
+        NAME_TESTER = #{record.nameTester,jdbcType=VARCHAR},
+      </if>
+      <if test="record.dtFixed != null" >
+        DT_FIXED = #{record.dtFixed,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.cdBugReason != null" >
+        CD_BUG_REASON = #{record.cdBugReason,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdSeverity != null" >
+        CD_SEVERITY = #{record.cdSeverity,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdModual != null" >
+        CD_MODUAL = #{record.cdModual,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameSystem != null" >
+        NAME_SYSTEM = #{record.nameSystem,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdSuspend != null" >
+        CD_SUSPEND = #{record.cdSuspend,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update task_bugfix
+    set ID_TASK = #{record.idTask,jdbcType=VARCHAR},
+      ID_PROJECT = #{record.idProject,jdbcType=VARCHAR},
+      NAME_TASK = #{record.nameTask,jdbcType=VARCHAR},
+      CD_TASK_TYPE = #{record.cdTaskType,jdbcType=VARCHAR},
+      CD_TASK_TAG = #{record.cdTaskTag,jdbcType=VARCHAR},
+      CD_STATUS = #{record.cdStatus,jdbcType=VARCHAR},
+      DT_CREATE = #{record.dtCreate,jdbcType=TIMESTAMP},
+      DT_END = #{record.dtEnd,jdbcType=TIMESTAMP},
+      ID_CREATE_USER = #{record.idCreateUser,jdbcType=VARCHAR},
+      CD_DESCRIPTION = #{record.cdDescription,jdbcType=VARCHAR},
+      NAME_TESTER = #{record.nameTester,jdbcType=VARCHAR},
+      DT_FIXED = #{record.dtFixed,jdbcType=TIMESTAMP},
+      CD_BUG_REASON = #{record.cdBugReason,jdbcType=VARCHAR},
+      CD_SEVERITY = #{record.cdSeverity,jdbcType=VARCHAR},
+      CD_MODUAL = #{record.cdModual,jdbcType=VARCHAR},
+      NAME_SYSTEM = #{record.nameSystem,jdbcType=VARCHAR},
+      CD_SUSPEND = #{record.cdSuspend,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.TaskBugfix" >
+    update task_bugfix
+    <set >
+      <if test="idProject != null" >
+        ID_PROJECT = #{idProject,jdbcType=VARCHAR},
+      </if>
+      <if test="nameTask != null" >
+        NAME_TASK = #{nameTask,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTaskType != null" >
+        CD_TASK_TYPE = #{cdTaskType,jdbcType=VARCHAR},
+      </if>
+      <if test="cdTaskTag != null" >
+        CD_TASK_TAG = #{cdTaskTag,jdbcType=VARCHAR},
+      </if>
+      <if test="cdStatus != null" >
+        CD_STATUS = #{cdStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="dtCreate != null" >
+        DT_CREATE = #{dtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dtEnd != null" >
+        DT_END = #{dtEnd,jdbcType=TIMESTAMP},
+      </if>
+      <if test="idCreateUser != null" >
+        ID_CREATE_USER = #{idCreateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="cdDescription != null" >
+        CD_DESCRIPTION = #{cdDescription,jdbcType=VARCHAR},
+      </if>
+      <if test="nameTester != null" >
+        NAME_TESTER = #{nameTester,jdbcType=VARCHAR},
+      </if>
+      <if test="dtFixed != null" >
+        DT_FIXED = #{dtFixed,jdbcType=TIMESTAMP},
+      </if>
+      <if test="cdBugReason != null" >
+        CD_BUG_REASON = #{cdBugReason,jdbcType=VARCHAR},
+      </if>
+      <if test="cdSeverity != null" >
+        CD_SEVERITY = #{cdSeverity,jdbcType=VARCHAR},
+      </if>
+      <if test="cdModual != null" >
+        CD_MODUAL = #{cdModual,jdbcType=VARCHAR},
+      </if>
+      <if test="nameSystem != null" >
+        NAME_SYSTEM = #{nameSystem,jdbcType=VARCHAR},
+      </if>
+      <if test="cdSuspend != null" >
+        CD_SUSPEND = #{cdSuspend,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.TaskBugfix" >
+    update task_bugfix
+    set ID_PROJECT = #{idProject,jdbcType=VARCHAR},
+      NAME_TASK = #{nameTask,jdbcType=VARCHAR},
+      CD_TASK_TYPE = #{cdTaskType,jdbcType=VARCHAR},
+      CD_TASK_TAG = #{cdTaskTag,jdbcType=VARCHAR},
+      CD_STATUS = #{cdStatus,jdbcType=VARCHAR},
+      DT_CREATE = #{dtCreate,jdbcType=TIMESTAMP},
+      DT_END = #{dtEnd,jdbcType=TIMESTAMP},
+      ID_CREATE_USER = #{idCreateUser,jdbcType=VARCHAR},
+      CD_DESCRIPTION = #{cdDescription,jdbcType=VARCHAR},
+      NAME_TESTER = #{nameTester,jdbcType=VARCHAR},
+      DT_FIXED = #{dtFixed,jdbcType=TIMESTAMP},
+      CD_BUG_REASON = #{cdBugReason,jdbcType=VARCHAR},
+      CD_SEVERITY = #{cdSeverity,jdbcType=VARCHAR},
+      CD_MODUAL = #{cdModual,jdbcType=VARCHAR},
+      NAME_SYSTEM = #{nameSystem,jdbcType=VARCHAR},
+      CD_SUSPEND = #{cdSuspend,jdbcType=VARCHAR}
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.TaskBugfix" >
+    insert into task_bugfix
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      ID_TASK,ID_PROJECT,NAME_TASK,CD_TASK_TYPE,CD_TASK_TAG,CD_STATUS,DT_CREATE,DT_END,ID_CREATE_USER,CD_DESCRIPTION,NAME_TESTER,DT_FIXED,CD_BUG_REASON,CD_SEVERITY,CD_MODUAL,NAME_SYSTEM,CD_SUSPEND,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idTask,jdbcType=VARCHAR},#{item.idProject,jdbcType=VARCHAR},#{item.nameTask,jdbcType=VARCHAR},#{item.cdTaskType,jdbcType=VARCHAR},#{item.cdTaskTag,jdbcType=VARCHAR},#{item.cdStatus,jdbcType=VARCHAR},#{item.dtCreate,jdbcType=TIMESTAMP},#{item.dtEnd,jdbcType=TIMESTAMP},#{item.idCreateUser,jdbcType=VARCHAR},#{item.cdDescription,jdbcType=VARCHAR},#{item.nameTester,jdbcType=VARCHAR},#{item.dtFixed,jdbcType=TIMESTAMP},#{item.cdBugReason,jdbcType=VARCHAR},#{item.cdSeverity,jdbcType=VARCHAR},#{item.cdModual,jdbcType=VARCHAR},#{item.nameSystem,jdbcType=VARCHAR},#{item.cdSuspend,jdbcType=VARCHAR},
+      </trim>
+      )
+    </foreach>
+  </insert>
+  <select id="selectByBigOffset" resultMap="BaseResultMap" parameterType="com.sl.entity.TaskBugfix" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from task_bugfix
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+      <choose >
+        <when test="oredCriteria != null and oredCriteria.size()>0 and criteria.valid" >
+          and
+        </when>
+        <otherwise >
+          where
+        </otherwise>
+      </choose>
+      ID_TASK &lt;=(select ID_TASK from task_bugfix
+      <if test="_parameter != null" >
+        <include refid="Example_Where_Clause" />
+      </if>
+      order by ID_TASK desc limit #{offset},1) order by ID_TASK desc limit #{limit}
+    </if>
+  </select>
+</mapper>

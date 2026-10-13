@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.SearchMapper" >
+
+  <resultMap id="SearchHitMap" type="com.sl.bo.SearchHit" >
+    <result column="CD_TYPE" property="cdType" jdbcType="VARCHAR" />
+    <result column="ID_BIZ" property="idBiz" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="NAME_TITLE" property="nameTitle" jdbcType="VARCHAR" />
+    <result column="CD_CONTENT" property="cdContent" jdbcType="VARCHAR" />
+    <result column="DT_CREATE" property="dtCreate" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <!-- 只搜当前用户参与的项目：projectIds 为空时退化成全库，
+       调用方（SearchService）保证至少传一个 ID，空列表时直接返回空结果。 -->
+  <sql id="In_Projects" >
+    <choose >
+      <when test="projectIds != null and projectIds.size() > 0">
+        ID_PROJECT in
+        <foreach collection="projectIds" item="pid" open="(" close=")" separator=",">#{pid,jdbcType=VARCHAR}</foreach>
+      </when>
+      <otherwise>
+        1 = 0
+      </otherwise>
+    </choose>
+  </sql>
+
+  <select id="searchTasks" resultMap="SearchHitMap" parameterType="map" >
+    select 'TASK' as CD_TYPE, ID_TASK as ID_BIZ, ID_PROJECT,
+           NAME_TASK as NAME_TITLE, CD_DESCRIPTION as CD_CONTENT, DT_CREATE
+    from task
+    where
+    <include refid="In_Projects" />
+      and MATCH(NAME_TASK, CD_DESCRIPTION) AGAINST (CONCAT(#{keyword,jdbcType=VARCHAR}, '*') IN BOOLEAN MODE)
+    order by DT_CREATE desc
+    limit #{limit}
+  </select>
+
+  <select id="searchComments" resultMap="SearchHitMap" parameterType="map" >
+    select 'COMMENT' as CD_TYPE, c.ID_TASK as ID_BIZ, t.ID_PROJECT,
+           t.NAME_TASK as NAME_TITLE, c.CD_COMMENT as CD_CONTENT, c.DT_COMMENT as DT_CREATE
+    from task_comment c
+    join task t on t.ID_TASK = c.ID_TASK
+    where
+    <include refid="In_Projects_Owner" />
+      and MATCH(c.CD_COMMENT) AGAINST (CONCAT(#{keyword,jdbcType=VARCHAR}, '*') IN BOOLEAN MODE)
+    order by c.DT_COMMENT desc
+    limit #{limit}
+  </select>
+
+  <sql id="In_Projects_Owner" >
+    <choose >
+      <when test="projectIds != null and projectIds.size() > 0">
+        t.ID_PROJECT in
+        <foreach collection="projectIds" item="pid" open="(" close=")" separator=",">#{pid,jdbcType=VARCHAR}</foreach>
+      </when>
+      <otherwise>
+        1 = 0
+      </otherwise>
+    </choose>
+  </sql>
+
+  <select id="searchDocs" resultMap="SearchHitMap" parameterType="map" >
+    select 'DOC' as CD_TYPE, ID_FILE as ID_BIZ, ID_PROJECT,
+           NAME_FILE as NAME_TITLE, CD_COMMENT as CD_CONTENT, DT_UPLOAD as DT_CREATE
+    from project_task_file
+    where
+    <include refid="In_Projects" />
+      and MATCH(NAME_FILE, CD_COMMENT) AGAINST (CONCAT(#{keyword,jdbcType=VARCHAR}, '*') IN BOOLEAN MODE)
+    order by DT_UPLOAD desc
+    limit #{limit}
+  </select>
+
+  <!-- ============================================================
+       LIKE 降级查询：全文索引缺失（未执行索引脚本）或单字关键词时使用。
+       行为与上面三条一一对应，只是 MATCH 换成 LIKE。
+       ============================================================ -->
+  <select id="searchTasksLike" resultMap="SearchHitMap" parameterType="map" >
+    select 'TASK' as CD_TYPE, ID_TASK as ID_BIZ, ID_PROJECT,
+           NAME_TASK as NAME_TITLE, CD_DESCRIPTION as CD_CONTENT, DT_CREATE
+    from task
+    where
+    <include refid="In_Projects" />
+      and (NAME_TASK like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
+           or CD_DESCRIPTION like concat('%', #{keyword,jdbcType=VARCHAR}, '%'))
+    order by DT_CREATE desc
+    limit #{limit}
+  </select>
+
+  <select id="searchCommentsLike" resultMap="SearchHitMap" parameterType="map" >
+    select 'COMMENT' as CD_TYPE, c.ID_TASK as ID_BIZ, t.ID_PROJECT,
+           t.NAME_TASK as NAME_TITLE, c.CD_COMMENT as CD_CONTENT, c.DT_COMMENT as DT_CREATE
+    from task_comment c
+    join task t on t.ID_TASK = c.ID_TASK
+    where
+    <include refid="In_Projects_Owner" />
+      and c.CD_COMMENT like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
+    order by c.DT_COMMENT desc
+    limit #{limit}
+  </select>
+
+  <select id="searchDocsLike" resultMap="SearchHitMap" parameterType="map" >
+    select 'DOC' as CD_TYPE, ID_FILE as ID_BIZ, ID_PROJECT,
+           NAME_FILE as NAME_TITLE, CD_COMMENT as CD_CONTENT, DT_UPLOAD as DT_CREATE
+    from project_task_file
+    where
+    <include refid="In_Projects" />
+      and (NAME_FILE like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
+           or CD_COMMENT like concat('%', #{keyword,jdbcType=VARCHAR}, '%'))
+    order by DT_UPLOAD desc
+    limit #{limit}
+  </select>
+
+</mapper>

@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.MenuMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.Menu" >
+    <id column="ID_MENU" property="idMenu" jdbcType="VARCHAR" />
+    <result column="NAME_MENU" property="nameMenu" jdbcType="VARCHAR" />
+    <result column="NAME_CLASS" property="nameClass" jdbcType="VARCHAR" />
+    <result column="ID_PARENT" property="idParent" jdbcType="VARCHAR" />
+    <result column="NBR_ORDER" property="nbrOrder" jdbcType="VARCHAR" />
+    <result column="CD_MENU_TYPE" property="cdMenuType" jdbcType="VARCHAR" />
+    <result column="FLAG_LOWEST" property="flagLowest" jdbcType="VARCHAR" />
+    <result column="NAME_PERMISSION" property="namePermission" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ID_MENU, NAME_MENU, NAME_CLASS, ID_PARENT, NBR_ORDER, CD_MENU_TYPE, FLAG_LOWEST, 
+    NAME_PERMISSION
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.MenuExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from menu
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from menu
+    where ID_MENU = #{idMenu,jdbcType=VARCHAR}
+  </select>
+  <select id="getMenuByRoleId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select menu.* from menu ,roles_permissions rp,permissions p where rp.ROLE_ID =#{roleId,jdbcType=VARCHAR}
+    and rp.PERMISSION_ID=p.PERMISSION_ID and menu.ID_MENU=p.RESOURCE_NAME 
+    order by nbr_order asc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from menu
+    where ID_MENU = #{idMenu,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.MenuExample" >
+    delete from menu
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.Menu" >
+    insert into menu (ID_MENU, NAME_MENU, NAME_CLASS, 
+      ID_PARENT, NBR_ORDER, CD_MENU_TYPE, 
+      FLAG_LOWEST, NAME_PERMISSION)
+    values (#{idMenu,jdbcType=VARCHAR}, #{nameMenu,jdbcType=VARCHAR}, #{nameClass,jdbcType=VARCHAR}, 
+      #{idParent,jdbcType=VARCHAR}, #{nbrOrder,jdbcType=VARCHAR}, #{cdMenuType,jdbcType=VARCHAR}, 
+      #{flagLowest,jdbcType=VARCHAR}, #{namePermission,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.Menu" >
+    insert into menu
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="idMenu != null" >
+        ID_MENU,
+      </if>
+      <if test="nameMenu != null" >
+        NAME_MENU,
+      </if>
+      <if test="nameClass != null" >
+        NAME_CLASS,
+      </if>
+      <if test="idParent != null" >
+        ID_PARENT,
+      </if>
+      <if test="nbrOrder != null" >
+        NBR_ORDER,
+      </if>
+      <if test="cdMenuType != null" >
+        CD_MENU_TYPE,
+      </if>
+      <if test="flagLowest != null" >
+        FLAG_LOWEST,
+      </if>
+      <if test="namePermission != null" >
+        NAME_PERMISSION,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="idMenu != null" >
+        #{idMenu,jdbcType=VARCHAR},
+      </if>
+      <if test="nameMenu != null" >
+        #{nameMenu,jdbcType=VARCHAR},
+      </if>
+      <if test="nameClass != null" >
+        #{nameClass,jdbcType=VARCHAR},
+      </if>
+      <if test="idParent != null" >
+        #{idParent,jdbcType=VARCHAR},
+      </if>
+      <if test="nbrOrder != null" >
+        #{nbrOrder,jdbcType=VARCHAR},
+      </if>
+      <if test="cdMenuType != null" >
+        #{cdMenuType,jdbcType=VARCHAR},
+      </if>
+      <if test="flagLowest != null" >
+        #{flagLowest,jdbcType=VARCHAR},
+      </if>
+      <if test="namePermission != null" >
+        #{namePermission,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update menu
+    <set >
+      <if test="record.idMenu != null" >
+        ID_MENU = #{record.idMenu,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameMenu != null" >
+        NAME_MENU = #{record.nameMenu,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nameClass != null" >
+        NAME_CLASS = #{record.nameClass,jdbcType=VARCHAR},
+      </if>
+      <if test="record.idParent != null" >
+        ID_PARENT = #{record.idParent,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nbrOrder != null" >
+        NBR_ORDER = #{record.nbrOrder,jdbcType=VARCHAR},
+      </if>
+      <if test="record.cdMenuType != null" >
+        CD_MENU_TYPE = #{record.cdMenuType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.flagLowest != null" >
+        FLAG_LOWEST = #{record.flagLowest,jdbcType=VARCHAR},
+      </if>
+      <if test="record.namePermission != null" >
+        NAME_PERMISSION = #{record.namePermission,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update menu
+    set ID_MENU = #{record.idMenu,jdbcType=VARCHAR},
+      NAME_MENU = #{record.nameMenu,jdbcType=VARCHAR},
+      NAME_CLASS = #{record.nameClass,jdbcType=VARCHAR},
+      ID_PARENT = #{record.idParent,jdbcType=VARCHAR},
+      NBR_ORDER = #{record.nbrOrder,jdbcType=VARCHAR},
+      CD_MENU_TYPE = #{record.cdMenuType,jdbcType=VARCHAR},
+      FLAG_LOWEST = #{record.flagLowest,jdbcType=VARCHAR},
+      NAME_PERMISSION = #{record.namePermission,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.Menu" >
+    update menu
+    <set >
+      <if test="nameMenu != null" >
+        NAME_MENU = #{nameMenu,jdbcType=VARCHAR},
+      </if>
+      <if test="nameClass != null" >
+        NAME_CLASS = #{nameClass,jdbcType=VARCHAR},
+      </if>
+      <if test="idParent != null" >
+        ID_PARENT = #{idParent,jdbcType=VARCHAR},
+      </if>
+      <if test="nbrOrder != null" >
+        NBR_ORDER = #{nbrOrder,jdbcType=VARCHAR},
+      </if>
+      <if test="cdMenuType != null" >
+        CD_MENU_TYPE = #{cdMenuType,jdbcType=VARCHAR},
+      </if>
+      <if test="flagLowest != null" >
+        FLAG_LOWEST = #{flagLowest,jdbcType=VARCHAR},
+      </if>
+      <if test="namePermission != null" >
+        NAME_PERMISSION = #{namePermission,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where ID_MENU = #{idMenu,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.Menu" >
+    update menu
+    set NAME_MENU = #{nameMenu,jdbcType=VARCHAR},
+      NAME_CLASS = #{nameClass,jdbcType=VARCHAR},
+      ID_PARENT = #{idParent,jdbcType=VARCHAR},
+      NBR_ORDER = #{nbrOrder,jdbcType=VARCHAR},
+      CD_MENU_TYPE = #{cdMenuType,jdbcType=VARCHAR},
+      FLAG_LOWEST = #{flagLowest,jdbcType=VARCHAR},
+      NAME_PERMISSION = #{namePermission,jdbcType=VARCHAR}
+    where ID_MENU = #{idMenu,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.Menu" >
+    insert into menu
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      ID_MENU,NAME_MENU,NAME_CLASS,ID_PARENT,NBR_ORDER,CD_MENU_TYPE,FLAG_LOWEST,NAME_PERMISSION,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.idMenu,jdbcType=VARCHAR},#{item.nameMenu,jdbcType=VARCHAR},#{item.nameClass,jdbcType=VARCHAR},#{item.idParent,jdbcType=VARCHAR},#{item.nbrOrder,jdbcType=VARCHAR},#{item.cdMenuType,jdbcType=VARCHAR},#{item.flagLowest,jdbcType=VARCHAR},#{item.namePermission,jdbcType=VARCHAR},
+      </trim>
+      )
+    </foreach>
+  </insert>
+  <select id="selectByBigOffset" resultMap="BaseResultMap" parameterType="com.sl.entity.Menu" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from menu
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+      <choose >
+        <when test="oredCriteria != null and oredCriteria.size()>0 and criteria.valid" >
+          and
+        </when>
+        <otherwise >
+          where
+        </otherwise>
+      </choose>
+      ID_MENU &lt;=(select ID_MENU from menu
+      <if test="_parameter != null" >
+        <include refid="Example_Where_Clause" />
+      </if>
+      order by ID_MENU desc limit #{offset},1) order by ID_MENU desc limit #{limit}
+    </if>
+  </select>
+  
+    <select id="selectAllMenusByUserId" resultMap="BaseResultMap">
+  		select DISTINCT
+  			 m.id_menu, m.name_menu, m.name_class, m.id_parent, m.nbr_order,m.cd_menu_type, m.flag_lowest,m.name_permission
+ from menu m,users_roles u,roles_permissions up,permissions p 
+	where m.ID_MENU= p.resource_name and p.permission_id= up.permission_id and up.role_id = u.role_id 
+	AND u.user_id= #{userId,jdbcType=VARCHAR}
+  		order by nbr_order
+  </select>
+</mapper>

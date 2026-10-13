@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.UsersRoleMapper" >
+  <resultMap id="BaseResultMap" type="com.sl.entity.UsersRole" >
+    <id column="USER_ID" property="userId" jdbcType="VARCHAR" />
+    <id column="ROLE_ID" property="roleId" jdbcType="VARCHAR" />
+    <result column="VERSION" property="version" jdbcType="TINYINT" />
+    <result column="TIMESTAMP" property="timestamp" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    USER_ID, ROLE_ID, VERSION, TIMESTAMP
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.UsersRoleExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    'false' as QUERYID,
+    <include refid="Base_Column_List" />
+    from users_roles
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <include refid="MysqlDialectSuffix" />
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="map" >
+    select 
+    <include refid="Base_Column_List" />
+    from users_roles
+    where USER_ID = #{userId,jdbcType=VARCHAR}
+      and ROLE_ID = #{roleId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="map" >
+    delete from users_roles
+    where USER_ID = #{userId,jdbcType=VARCHAR}
+      and ROLE_ID = #{roleId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.sl.entity.UsersRoleExample" >
+    delete from users_roles
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.sl.entity.UsersRole" >
+    insert into users_roles (USER_ID, ROLE_ID, VERSION, 
+      TIMESTAMP)
+    values (#{userId,jdbcType=VARCHAR}, #{roleId,jdbcType=VARCHAR}, #{version,jdbcType=TINYINT}, 
+      #{timestamp,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sl.entity.UsersRole" >
+    insert into users_roles
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="userId != null" >
+        USER_ID,
+      </if>
+      <if test="roleId != null" >
+        ROLE_ID,
+      </if>
+      <if test="version != null" >
+        VERSION,
+      </if>
+      <if test="timestamp != null" >
+        TIMESTAMP,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="userId != null" >
+        #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="roleId != null" >
+        #{roleId,jdbcType=VARCHAR},
+      </if>
+      <if test="version != null" >
+        #{version,jdbcType=TINYINT},
+      </if>
+      <if test="timestamp != null" >
+        #{timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update users_roles
+    <set >
+      <if test="record.userId != null" >
+        USER_ID = #{record.userId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.roleId != null" >
+        ROLE_ID = #{record.roleId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.version != null" >
+        VERSION = #{record.version,jdbcType=TINYINT},
+      </if>
+      <if test="record.timestamp != null" >
+        TIMESTAMP = #{record.timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update users_roles
+    set USER_ID = #{record.userId,jdbcType=VARCHAR},
+      ROLE_ID = #{record.roleId,jdbcType=VARCHAR},
+      VERSION = #{record.version,jdbcType=TINYINT},
+      TIMESTAMP = #{record.timestamp,jdbcType=TIMESTAMP}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.UsersRole" >
+    update users_roles
+    <set >
+      <if test="version != null" >
+        VERSION = #{version,jdbcType=TINYINT},
+      </if>
+      <if test="timestamp != null" >
+        TIMESTAMP = #{timestamp,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where USER_ID = #{userId,jdbcType=VARCHAR}
+      and ROLE_ID = #{roleId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sl.entity.UsersRole" >
+    update users_roles
+    set VERSION = #{version,jdbcType=TINYINT},
+      TIMESTAMP = #{timestamp,jdbcType=TIMESTAMP}
+    where USER_ID = #{userId,jdbcType=VARCHAR}
+      and ROLE_ID = #{roleId,jdbcType=VARCHAR}
+  </update>
+  <sql id="MysqlDialectSuffix" >
+    <if test="offset != null and limit != null" >
+      <![CDATA[ limit #{offset}, #{limit}]]>
+    </if>
+  </sql>
+  <insert id="insertBatch" parameterType="com.sl.entity.UsersRole" >
+    insert into users_roles
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      USER_ID,ROLE_ID,VERSION,TIMESTAMP,
+    </trim>
+    values
+    <foreach collection="list" index="index" item="item" separator="," >
+      (
+      <trim suffixOverrides="," >
+        #{item.userId,jdbcType=VARCHAR},#{item.roleId,jdbcType=VARCHAR},#{item.version,jdbcType=TINYINT},#{item.timestamp,jdbcType=TIMESTAMP},
+      </trim>
+      )
+    </foreach>
+  </insert>
+</mapper>

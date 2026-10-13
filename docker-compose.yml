@@ -1,0 +1,75 @@
+# ============================================================
+# workingCoo 一键起全套（T3-6）
+#
+#   docker compose up -d          # 启动 app + mysql
+#   docker compose logs -f app    # 看应用日志
+#   docker compose down           # 停止（数据卷保留）
+#   docker compose down -v        # 连数据一起清掉
+#
+# 数据库结构：以 src/main/resources/institutions.sql 为唯一权威脚本，
+# 每次发布前手工更新并导入（应用启动时不再自动迁移）。
+# ============================================================
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: workingcoo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-WorkingCoo@2026}
+      MYSQL_DATABASE: project
+      # 兼容老客户端的认证插件；不改的话 mysql-connector-j 8.3 也能连，但省一次握手协商
+      MYSQL_ROOT_HOST: '%'
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # 必须等 MySQL 真正可连，否则 app 会先起再连不上，日志里一堆 HikariCP 报错
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-WorkingCoo@2026}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    container_name: workingcoo-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      # 宿主机 8081 -> 容器 8081；context-path 是 /work
+      - "8081:8081"
+    environment:
+      # Spring 宽松绑定：CLIENT1URL -> client1Url（MybatisConfig 用 @Value 读）
+      CLIENT1URL: jdbc:mysql://mysql:3306/project?useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true
+      DBDEMO1USERNAME: root
+      DBDEMO1PASSWORD: ${MYSQL_ROOT_PASSWORD:-WorkingCoo@2026}
+      DBCLASSNAME: com.mysql.cj.jdbc.Driver
+      # 覆盖 application.properties 里的 spring.profiles.active=dev
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8081
+      APP_STORAGE_DIR: /app/storage
+      JAVA_OPTS: "--add-opens java.base/java.lang=ALL-UNNAMED"
+    volumes:
+      # 上传的文件落在这里，容器重建不丢
+      - app-storage:/app/storage
+      - app-logs:/app/logs
+    healthcheck:
+      # Actuator 只暴露了 health，正好用来探活；curl 已在 Dockerfile 运行时层安装
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8081/work/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
+volumes:
+  mysql-data:
+  app-storage:
+  app-logs:

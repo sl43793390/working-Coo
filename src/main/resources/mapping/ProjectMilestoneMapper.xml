@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.ProjectMilestoneMapper" >
+
+  <resultMap id="BaseResultMap" type="com.sl.entity.ProjectMilestone" >
+    <id column="ID_MILESTONE" property="idMilestone" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="NAME_MILESTONE" property="nameMilestone" jdbcType="VARCHAR" />
+    <result column="DT_MILESTONE" property="dtMilestone" jdbcType="DATE" />
+    <result column="CD_STATUS" property="cdStatus" jdbcType="VARCHAR" />
+    <result column="CD_DESCRIPTION" property="cdDescription" jdbcType="VARCHAR" />
+    <result column="ID_CREATE_USER" property="idCreateUser" jdbcType="VARCHAR" />
+    <result column="DT_CREATE" property="dtCreate" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    ID_MILESTONE, ID_PROJECT, NAME_MILESTONE, DT_MILESTONE, CD_STATUS, CD_DESCRIPTION,
+    ID_CREATE_USER, DT_CREATE
+  </sql>
+
+  <insert id="insert" parameterType="com.sl.entity.ProjectMilestone" >
+    insert into project_milestone (ID_MILESTONE, ID_PROJECT, NAME_MILESTONE, DT_MILESTONE,
+      CD_STATUS, CD_DESCRIPTION, ID_CREATE_USER, DT_CREATE)
+    values (#{idMilestone,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}, #{nameMilestone,jdbcType=VARCHAR},
+      #{dtMilestone,jdbcType=DATE}, #{cdStatus,jdbcType=VARCHAR}, #{cdDescription,jdbcType=VARCHAR},
+      #{idCreateUser,jdbcType=VARCHAR}, #{dtCreate,jdbcType=TIMESTAMP})
+  </insert>
+
+  <update id="updateByPrimaryKeySelective" parameterType="com.sl.entity.ProjectMilestone" >
+    update project_milestone
+    <set >
+      <if test="nameMilestone != null" >NAME_MILESTONE = #{nameMilestone,jdbcType=VARCHAR},</if>
+      <if test="dtMilestone != null" >DT_MILESTONE = #{dtMilestone,jdbcType=DATE},</if>
+      <if test="cdStatus != null" >CD_STATUS = #{cdStatus,jdbcType=VARCHAR},</if>
+      <if test="cdDescription != null" >CD_DESCRIPTION = #{cdDescription,jdbcType=VARCHAR},</if>
+    </set>
+    where ID_MILESTONE = #{idMilestone,jdbcType=VARCHAR}
+  </update>
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select
+    <include refid="Base_Column_List" />
+    from project_milestone
+    where ID_MILESTONE = #{idMilestone,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectByProject" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    from project_milestone
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+    order by DT_MILESTONE
+  </select>
+
+  <select id="selectDueBetween" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    from project_milestone
+    where CD_STATUS &lt;&gt; '已达成'
+      and DT_MILESTONE &gt;= #{from,jdbcType=DATE}
+      and DT_MILESTONE &lt;= #{to,jdbcType=DATE}
+    order by DT_MILESTONE
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from project_milestone
+    where ID_MILESTONE = #{idMilestone,jdbcType=VARCHAR}
+  </delete>
+
+  <delete id="deleteByProject" parameterType="map" >
+    delete from project_milestone
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+  </delete>
+
+</mapper>
