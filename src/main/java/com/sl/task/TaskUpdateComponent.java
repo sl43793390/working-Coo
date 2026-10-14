@@ -139,9 +139,11 @@ public class TaskUpdateComponent extends VerticalLayout{
 		HorizontalLayout dimBar = new HorizontalLayout();
 		dimBar.setPadding(false);
 		dimBar.setSpacing(true);
-		groupBtn = ComFactory.getTertriayBtn("新建分组", VaadinIcon.PLUS);
-		typeBtn = ComFactory.getTertriayBtn("新建类型", VaadinIcon.PLUS);
-		tagBtn = ComFactory.getTertriayBtn("新建标签", VaadinIcon.PLUS);
+		// 主按钮（蓝底白字）。不能用 getTertriayBtn：它挂了 vaadin-button-back（蓝底），
+		// tertiary 字色又是深蓝，蓝底蓝字看不清
+		groupBtn = ComFactory.getPrimaryBtn("新建分组", VaadinIcon.PLUS);
+		typeBtn = ComFactory.getPrimaryBtn("新建类型", VaadinIcon.PLUS);
+		tagBtn = ComFactory.getPrimaryBtn("新建标签", VaadinIcon.PLUS);
 		dimBar.add(groupBtn, typeBtn, tagBtn);
 		basic.add(form, dimBar);
 		add(basic);

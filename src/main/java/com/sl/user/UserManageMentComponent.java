@@ -18,6 +18,7 @@ import com.sl.entity.User;
 import com.sl.security.PasswordHasher;
 import com.sl.service.UserManageMentProcess;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.Icon;
@@ -79,37 +80,48 @@ public class UserManageMentComponent extends VerticalLayout {
 		userListTable.addColumn(User::getUserName).setHeader("用户名");
 		userListTable.addColumn(User::getEmail).setHeader("邮箱");
 		userListTable.addColumn(User::getOrganization).setHeader("机构");
-		userListTable.addComponentColumn(p -> {
-			HorizontalLayout ops = new HorizontalLayout();
-			ops.setSpacing(true);
-			ops.setPadding(false);
-			Button updateBtn = ComFactory.getPrimaryBtn("修改");
-			updateBtn.addClickListener(e -> {
-				if (!SecurityUtils.getSubject().isPermitted("updateUser")) {
-					ComFactory.notification("权限不足，请联系管理员");
-					return;
-				}
-				addUpdateTab(p.getUserId());
+	userListTable.addComponentColumn(p -> {
+		HorizontalLayout ops = new HorizontalLayout();
+		ops.setSpacing(false);
+		ops.setPadding(false);
+		// 图标化操作钮：两个蓝底文字按钮太占宽，图标 + 悬停提示更清爽（同「我的任务」操作列）
+		ops.getStyle().set("flex-wrap", "nowrap");
+		Button updateBtn = iconBtn(VaadinIcon.EDIT, "修改");
+		updateBtn.addClickListener(e -> {
+			if (!SecurityUtils.getSubject().isPermitted("updateUser")) {
+				ComFactory.notification("权限不足，请联系管理员");
+				return;
+			}
+			addUpdateTab(p.getUserId());
+		});
+		Button removeBtn = iconBtn(VaadinIcon.TRASH, "删除");
+		removeBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
+		removeBtn.addClickListener(e -> {
+			if (!SecurityUtils.getSubject().isPermitted("deleteUser")) {
+				ComFactory.notification("权限不足，请联系管理员");
+				return;
+			}
+			// ConfirmDialog 点「取消」时会自动关闭，无需在回调里再调 close()
+			ConfirmDialog confirmDialog = ComFactory.getConfirmationDialog(event -> {
+				deleteUser(p.getUserId());
+				ComFactory.notification("删除成功");
+			}, cancel -> {
 			});
-			Button removeBtn = ComFactory.getPrimaryBtn("删除");
-			removeBtn.addClickListener(e -> {
-				if (!SecurityUtils.getSubject().isPermitted("deleteUser")) {
-					ComFactory.notification("权限不足，请联系管理员");
-					return;
-				}
-				// ConfirmDialog 点「取消」时会自动关闭，无需在回调里再调 close()
-				ConfirmDialog confirmDialog = ComFactory.getConfirmationDialog(event -> {
-					deleteUser(p.getUserId());
-					ComFactory.notification("删除成功");
-				}, cancel -> {
-				});
-				confirmDialog.open();
-			});
-			ops.add(updateBtn, removeBtn);
-			return ops;
-		}).setHeader("操作");
-		add(userListTable);
-	}
+			confirmDialog.open();
+		});
+		ops.add(updateBtn, removeBtn);
+		return ops;
+	}).setHeader("操作").setAutoWidth(true).setFlexGrow(0);
+	add(userListTable);
+}
+
+/** 图标化操作钮：tertiary 图标按钮 + 悬停提示 */
+private Button iconBtn(VaadinIcon icon, String tooltip) {
+	Button b = new Button(new Icon(icon));
+	b.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+	b.setTooltipText(tooltip);
+	return b;
+}
 
 	public void initContent() {
 		initContentTable();
