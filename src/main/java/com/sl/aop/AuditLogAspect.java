@@ -77,6 +77,19 @@ public class AuditLogAspect {
 					detail = "文件=" + f.getNameFile();
 					break;
 				}
+				// S4/S7：清单项与子任务挂到所属任务的时间线上
+				if (arg instanceof com.sl.entity.TaskChecklistItem ci) {
+					idBiz = ci.getIdTask();
+					idProject = ci.getIdProject();
+					detail = "清单项=" + ci.getCdContent();
+					break;
+				}
+				if (arg instanceof com.sl.entity.TaskSubtask sub) {
+					idBiz = sub.getIdTaskParent();
+					idProject = sub.getIdProject();
+					detail = "子任务=" + sub.getNameTask();
+					break;
+				}
 			}
 			if (null == idBiz && args.length > 0 && args[0] instanceof String s) {
 				// 只有 ID 入参的方法（例如按 ID 删除）：直接用第一个字符串当业务 ID

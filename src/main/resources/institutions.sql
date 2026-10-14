@@ -65,6 +65,7 @@ INSERT INTO `menu` VALUES ('projectDoc', '项目文档', 'project.ProjectDocumen
 INSERT INTO `menu` VALUES ('projectMgmt', '项目管理', NULL, NULL, '100', 'project', NULL, NULL);
 INSERT INTO `menu` VALUES ('projectMgmtDetail', '我的项目', 'project.MyProject', 'projectMgmt', '101', 'project', 'Y', NULL);
 INSERT INTO `menu` VALUES ('ProjectRecycleBin', '项目回收站', 'project.ProjectRecycleBin', 'backEndMgmt', '9002', 'systemConfig', 'Y', NULL);
+INSERT INTO `menu` VALUES ('taskRecycleBin', '任务回收站', 'task.TaskRecycleBin', 'backEndMgmt', '9003', 'systemConfig', 'Y', NULL);
 INSERT INTO `menu` VALUES ('projectStatistics', '项目统计信息', 'project.ProjectStatiticsComponent', 'projectMgmt', '102', 'project', 'Y', NULL);
 INSERT INTO `menu` VALUES ('roleMgmt', '角色管理', 'user.UserRoleManagementComponent', 'userRoot', '650', 'user', 'Y', NULL);
 INSERT INTO `menu` VALUES ('schedule', '日程', 'schedule.ScheduleComponent', 'myTodo', '306', 'task', 'Y', NULL);
@@ -129,6 +130,7 @@ INSERT INTO `permissions` VALUES ('900', 'backEndMgmt', '后台管理', NULL, NU
 INSERT INTO `permissions` VALUES ('901', 'systemConfig', '系统配置', NULL, '900', NULL, 901, '2022-12-16 13:06:32');
 INSERT INTO `permissions` VALUES ('902', 'systemOtherSetting', '其它', NULL, '900', NULL, 902, '2023-06-05 15:29:33');
 INSERT INTO `permissions` VALUES ('903', 'ProjectRecycleBin', '项目回收站', NULL, '900', NULL, 903, '2023-06-15 13:15:56');
+INSERT INTO `permissions` VALUES ('904', 'taskRecycleBin', '任务回收站', NULL, '900', NULL, 904, NOW());
 
 -- ----------------------------
 -- Table structure for project_group
@@ -395,6 +397,7 @@ INSERT INTO `roles_permissions` VALUES ('admin', '900', NULL, '2023-06-12 20:47:
 INSERT INTO `roles_permissions` VALUES ('admin', '901', NULL, '2023-06-12 20:47:23');
 INSERT INTO `roles_permissions` VALUES ('admin', '902', NULL, '2023-06-12 20:47:23');
 INSERT INTO `roles_permissions` VALUES ('admin', '903', NULL, '2023-06-15 13:16:11');
+INSERT INTO `roles_permissions` VALUES ('admin', '904', NULL, NOW());
 INSERT INTO `roles_permissions` VALUES ('asd', '200', NULL, '2022-12-16 13:07:47');
 INSERT INTO `roles_permissions` VALUES ('asd', '201', NULL, '2022-12-16 13:07:47');
 INSERT INTO `roles_permissions` VALUES ('asd', '202', NULL, '2022-12-16 13:07:47');
@@ -698,3 +701,100 @@ SET FOREIGN_KEY_CHECKS = 1;
 ALTER TABLE `task` ADD FULLTEXT INDEX `ft_task_name_desc` (`NAME_TASK`, `CD_DESCRIPTION`) WITH PARSER ngram;
 ALTER TABLE `task_comment` ADD FULLTEXT INDEX `ft_task_comment` (`CD_COMMENT`) WITH PARSER ngram;
 ALTER TABLE `project_task_file` ADD FULLTEXT INDEX `ft_file_name_comment` (`NAME_FILE`, `CD_COMMENT`) WITH PARSER ngram;
+
+-- ============================================================
+-- 结构补齐（2026-10）：
+-- 1) 代码先于脚本的四张表（task_dependency / project_milestone /
+--    notification / operation_log）并入权威脚本；
+-- 2) 任务软删除（回收站）新增列；
+-- 3) 任务检查清单表。
+-- 注意：task 的 ALTER 必须放在上面 task 的全量 INSERT 之后执行
+-- （INSERT 是按列位置的，先加列会导致样例数据插入报列数不匹配）。
+-- 已有库执行重复 ALTER 会报 Duplicate column name，忽略即可。
+-- ============================================================
+
+-- 任务前置依赖（T2-3）：ID_PRE_TASK 必须先完成，ID_TASK 才能开始（FS + lag）
+DROP TABLE IF EXISTS `task_dependency`;
+CREATE TABLE `task_dependency`  (
+  `ID_DEPENDENCY` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '依赖ID',
+  `ID_PROJECT` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '项目ID',
+  `ID_TASK` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '后继任务ID',
+  `ID_PRE_TASK` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '前置任务ID',
+  `NBR_LAG_DAY` int NULL DEFAULT NULL COMMENT ' lag 天数',
+  `DT_CREATE` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `ID_CREATE_USER` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '创建人',
+  PRIMARY KEY (`ID_DEPENDENCY`) USING BTREE,
+  INDEX `idx_dep_task`(`ID_TASK`) USING BTREE,
+  INDEX `idx_dep_pretask`(`ID_PRE_TASK`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci COMMENT = '任务前置依赖（FS）' ROW_FORMAT = DYNAMIC;
+
+-- 项目里程碑（T2-6）
+DROP TABLE IF EXISTS `project_milestone`;
+CREATE TABLE `project_milestone`  (
+  `ID_MILESTONE` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '里程碑ID',
+  `ID_PROJECT` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '项目ID',
+  `NAME_MILESTONE` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '里程碑名称',
+  `DT_MILESTONE` date NULL DEFAULT NULL COMMENT '目标日期',
+  `CD_STATUS` varchar(16) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT '未达成' COMMENT '状态：未达成/已达成',
+  `CD_DESCRIPTION` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '描述',
+  `ID_CREATE_USER` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '创建人',
+  `DT_CREATE` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`ID_MILESTONE`) USING BTREE,
+  INDEX `idx_milestone_project`(`ID_PROJECT`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci COMMENT = '项目里程碑' ROW_FORMAT = DYNAMIC;
+
+-- 站内通知（T2-4）
+DROP TABLE IF EXISTS `notification`;
+CREATE TABLE `notification`  (
+  `ID_NOTIFICATION` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '通知ID',
+  `ID_USER` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '接收人',
+  `CD_TYPE` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '类型：ASSIGN/COMMENT/DUE/MILESTONE/DEPEND/SCHEDULE',
+  `ID_BIZ` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '业务对象ID（任务/里程碑/日程），判重与跳转用',
+  `ID_PROJECT` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '项目ID',
+  `CD_TITLE` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '标题',
+  `CD_CONTENT` varchar(512) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '内容',
+  `FLAG_READ` char(1) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT 'N' COMMENT '是否已读 Y/N',
+  `DT_CREATE` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `DT_READ` datetime NULL DEFAULT NULL COMMENT '阅读时间',
+  PRIMARY KEY (`ID_NOTIFICATION`) USING BTREE,
+  INDEX `idx_notif_user`(`ID_USER`, `FLAG_READ`) USING BTREE,
+  INDEX `idx_notif_dedup`(`ID_USER`, `CD_TYPE`, `ID_BIZ`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci COMMENT = '站内通知' ROW_FORMAT = DYNAMIC;
+
+-- 操作日志（T2-10，@AuditLog + AOP 落库）
+DROP TABLE IF EXISTS `operation_log`;
+CREATE TABLE `operation_log`  (
+  `ID_LOG` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '日志ID',
+  `ID_USER` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '操作人ID',
+  `NAME_USER` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '操作人姓名',
+  `ID_PROJECT` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '项目ID',
+  `CD_BIZ_TYPE` varchar(16) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '业务类型：PROJECT/TASK/DOC/USER/SCHEDULE/MILESTONE',
+  `ID_BIZ` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '业务对象ID',
+  `CD_ACTION` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '动作',
+  `CD_DETAIL` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '明细',
+  `DT_OPERATION` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  PRIMARY KEY (`ID_LOG`) USING BTREE,
+  INDEX `idx_oplog_biz`(`CD_BIZ_TYPE`, `ID_BIZ`) USING BTREE,
+  INDEX `idx_oplog_project`(`ID_PROJECT`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci COMMENT = '操作日志' ROW_FORMAT = DYNAMIC;
+
+-- 任务软删除（回收站）：FLAG_DELETE NOT NULL DEFAULT 'N'，ALTER 时存量行自动补 'N'，
+-- 各查询用 FLAG_DELETE <> 'Y' 过滤即可，不用再兼容 NULL
+ALTER TABLE `task` ADD COLUMN `FLAG_DELETE` char(1) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'N' COMMENT '删除标记，Y表示已删除（回收站）';
+ALTER TABLE `task` ADD COLUMN `DT_DELETE` datetime NULL DEFAULT NULL COMMENT '删除时间，回收站 30 天自动清理依据';
+
+-- 任务检查清单（S4）
+DROP TABLE IF EXISTS `task_checklist_item`;
+CREATE TABLE `task_checklist_item`  (
+  `ID_ITEM` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '清单项ID',
+  `ID_PROJECT` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '项目ID',
+  `ID_TASK` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '任务ID',
+  `CD_CONTENT` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '清单内容',
+  `FLAG_DONE` char(1) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT 'N' COMMENT '是否完成 Y/N',
+  `NBR_ORDER` int NULL DEFAULT 0 COMMENT '排序号',
+  `ID_USER` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '创建人',
+  `DT_CREATE` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`ID_ITEM`) USING BTREE,
+  INDEX `idx_chk_task`(`ID_TASK`) USING BTREE,
+  INDEX `idx_chk_project`(`ID_PROJECT`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci COMMENT = '任务检查清单' ROW_FORMAT = DYNAMIC;

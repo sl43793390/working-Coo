@@ -68,4 +68,21 @@ public interface TaskMapper  extends BaseMapper<Task>{
      * 一次 SQL 出「任务 + 执行人」，避免调度器里逐任务再查 task_user。
      */
     List<Map<String, Object>> selectDueTaskExecutors(@Param("from") Date from, @Param("to") Date to);
+
+    /**
+     * S1 任务回收站：进回收站（软删除），只改 FLAG_DELETE/DT_DELETE。
+     */
+    int softDeleteById(@Param("idTask") String idTask);
+
+    /** S1 任务回收站：从回收站恢复 */
+    int recoverById(@Param("idTask") String idTask);
+
+    /** S1 任务回收站：机构内已删除任务列表 */
+    List<Task> selectDeletedByInstitution(@Param("idInstitution") String idInstitution);
+
+    /** S1 任务回收站：删除时间早于 before 的已删除任务（30 天自动清理） */
+    List<Task> selectDeletedBefore(@Param("before") Date before);
+
+    /** S1 任务回收站：物理删除单条（级联清理由 TaskProcess 编排） */
+    int purgeById(@Param("idTask") String idTask);
 }

@@ -22,6 +22,8 @@
     <result column="ID_EXE_USER" property="idExeUser" jdbcType="VARCHAR" />
     <result column="CD_DESCRIPTION" property="cdDescription" jdbcType="VARCHAR" />
     <result column="FLAG_PRIVATE" property="flagPrivate" jdbcType="CHAR" />
+    <result column="FLAG_DELETE" property="flagDelete" jdbcType="CHAR" />
+    <result column="DT_DELETE" property="dtDelete" jdbcType="TIMESTAMP" />
   </resultMap>
   <sql id="Example_Where_Clause" >
     <where >
@@ -85,7 +87,7 @@
     ID_TASK, ID_PROJECT, NAME_TASK, CD_TASK_GROUP, CD_TASK_TYPE, CD_TAG, CD_STATUS, INT_STAR,
     DT_CREATE, DT_START, DT_END, ID_USER, PCT_COMPLETE, PCT_OVERDUE,
     NBR_ESTIMATE_HOURS, NBR_ACTUAL_HOURS, CD_PRIOR, ID_EXE_USER, CD_DESCRIPTION,
-    FLAG_PRIVATE
+    FLAG_PRIVATE, FLAG_DELETE, DT_DELETE
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.sl.entity.TaskExample" >
     select
@@ -125,13 +127,13 @@
       CD_STATUS, INT_STAR, DT_CREATE,
       DT_START, DT_END, ID_USER, PCT_COMPLETE,
       PCT_OVERDUE, NBR_ESTIMATE_HOURS, NBR_ACTUAL_HOURS, CD_PRIOR, ID_EXE_USER,
-      CD_DESCRIPTION, FLAG_PRIVATE)
+      CD_DESCRIPTION, FLAG_PRIVATE, FLAG_DELETE, DT_DELETE)
     values (#{idTask,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}, #{nameTask,jdbcType=VARCHAR},
       #{cdTaskGroup,jdbcType=VARCHAR}, #{cdTaskType,jdbcType=VARCHAR}, #{cdTag,jdbcType=VARCHAR},
       #{cdStatus,jdbcType=VARCHAR}, #{intStar,jdbcType=BIT}, #{dtCreate,jdbcType=TIMESTAMP},
       #{dtStart,jdbcType=TIMESTAMP}, #{dtEnd,jdbcType=TIMESTAMP}, #{idUser,jdbcType=VARCHAR}, #{pctComplete,jdbcType=DECIMAL},
       #{pctOverdue,jdbcType=DECIMAL}, #{nbrEstimateHours,jdbcType=DECIMAL}, #{nbrActualHours,jdbcType=DECIMAL}, #{cdPrior,jdbcType=VARCHAR}, #{idExeUser,jdbcType=VARCHAR},
-      #{cdDescription,jdbcType=VARCHAR}, #{flagPrivate,jdbcType=CHAR})
+      #{cdDescription,jdbcType=VARCHAR}, #{flagPrivate,jdbcType=CHAR}, #{flagDelete,jdbcType=CHAR}, #{dtDelete,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="com.sl.entity.Task" >
     insert into task
@@ -196,6 +198,12 @@
       <if test="flagPrivate != null" >
         FLAG_PRIVATE,
       </if>
+      <if test="flagDelete != null" >
+        FLAG_DELETE,
+      </if>
+      <if test="dtDelete != null" >
+        DT_DELETE,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="idTask != null" >
@@ -257,6 +265,12 @@
       </if>
       <if test="flagPrivate != null" >
         #{flagPrivate,jdbcType=CHAR},
+      </if>
+      <if test="flagDelete != null" >
+        #{flagDelete,jdbcType=CHAR},
+      </if>
+      <if test="dtDelete != null" >
+        #{dtDelete,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
@@ -323,6 +337,12 @@
       <if test="record.flagPrivate != null" >
         FLAG_PRIVATE = #{record.flagPrivate,jdbcType=CHAR},
       </if>
+      <if test="record.flagDelete != null" >
+        FLAG_DELETE = #{record.flagDelete,jdbcType=CHAR},
+      </if>
+      <if test="record.dtDelete != null" >
+        DT_DELETE = #{record.dtDelete,jdbcType=TIMESTAMP},
+      </if>
     </set>
     <if test="_parameter != null" >
       <include refid="Update_By_Example_Where_Clause" />
@@ -349,7 +369,9 @@
       CD_PRIOR = #{record.cdPrior,jdbcType=VARCHAR},
       ID_EXE_USER = #{record.idExeUser,jdbcType=VARCHAR},
       CD_DESCRIPTION = #{record.cdDescription,jdbcType=VARCHAR},
-      FLAG_PRIVATE = #{record.flagPrivate,jdbcType=CHAR}
+      FLAG_PRIVATE = #{record.flagPrivate,jdbcType=CHAR},
+      FLAG_DELETE = #{record.flagDelete,jdbcType=CHAR},
+      DT_DELETE = #{record.dtDelete,jdbcType=TIMESTAMP}
     <if test="_parameter != null" >
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -414,6 +436,12 @@
       <if test="flagPrivate != null" >
         FLAG_PRIVATE = #{flagPrivate,jdbcType=CHAR},
       </if>
+      <if test="flagDelete != null" >
+        FLAG_DELETE = #{flagDelete,jdbcType=CHAR},
+      </if>
+      <if test="dtDelete != null" >
+        DT_DELETE = #{dtDelete,jdbcType=TIMESTAMP},
+      </if>
     </set>
     where ID_TASK = #{idTask,jdbcType=VARCHAR}
   </update>
@@ -437,7 +465,9 @@
       CD_PRIOR = #{cdPrior,jdbcType=VARCHAR},
       ID_EXE_USER = #{idExeUser,jdbcType=VARCHAR},
       CD_DESCRIPTION = #{cdDescription,jdbcType=VARCHAR},
-      FLAG_PRIVATE = #{flagPrivate,jdbcType=CHAR}
+      FLAG_PRIVATE = #{flagPrivate,jdbcType=CHAR},
+      FLAG_DELETE = #{flagDelete,jdbcType=CHAR},
+      DT_DELETE = #{dtDelete,jdbcType=TIMESTAMP}
     where ID_TASK = #{idTask,jdbcType=VARCHAR}
   </update>
   <sql id="MysqlDialectSuffix" >
@@ -448,13 +478,13 @@
   <insert id="insertBatch" parameterType="com.sl.entity.Task" >
     insert into task
     <trim prefix="(" suffix=")" suffixOverrides="," >
-      ID_TASK,ID_PROJECT,NAME_TASK,CD_TASK_GROUP,CD_TASK_TYPE,CD_TAG,CD_STATUS,INT_STAR,DT_CREATE,DT_START,DT_END,ID_USER,PCT_COMPLETE,PCT_OVERDUE,NBR_ESTIMATE_HOURS,NBR_ACTUAL_HOURS,CD_PRIOR,ID_EXE_USER,CD_DESCRIPTION,FLAG_PRIVATE,
+      ID_TASK,ID_PROJECT,NAME_TASK,CD_TASK_GROUP,CD_TASK_TYPE,CD_TAG,CD_STATUS,INT_STAR,DT_CREATE,DT_START,DT_END,ID_USER,PCT_COMPLETE,PCT_OVERDUE,NBR_ESTIMATE_HOURS,NBR_ACTUAL_HOURS,CD_PRIOR,ID_EXE_USER,CD_DESCRIPTION,FLAG_PRIVATE,FLAG_DELETE,DT_DELETE,
     </trim>
     values
     <foreach collection="list" index="index" item="item" separator="," >
       (
       <trim suffixOverrides="," >
-        #{item.idTask,jdbcType=VARCHAR},#{item.idProject,jdbcType=VARCHAR},#{item.nameTask,jdbcType=VARCHAR},#{item.cdTaskGroup,jdbcType=VARCHAR},#{item.cdTaskType,jdbcType=VARCHAR},#{item.cdTag,jdbcType=VARCHAR},#{item.cdStatus,jdbcType=VARCHAR},#{item.intStar,jdbcType=BIT},#{item.dtCreate,jdbcType=TIMESTAMP},#{item.dtStart,jdbcType=TIMESTAMP},#{item.dtEnd,jdbcType=TIMESTAMP},#{item.idUser,jdbcType=VARCHAR},#{item.pctComplete,jdbcType=DECIMAL},#{item.pctOverdue,jdbcType=DECIMAL},#{item.nbrEstimateHours,jdbcType=DECIMAL},#{item.nbrActualHours,jdbcType=DECIMAL},#{item.cdPrior,jdbcType=VARCHAR},#{item.idExeUser,jdbcType=VARCHAR},#{item.cdDescription,jdbcType=VARCHAR},#{item.flagPrivate,jdbcType=CHAR},
+        #{item.idTask,jdbcType=VARCHAR},#{item.idProject,jdbcType=VARCHAR},#{item.nameTask,jdbcType=VARCHAR},#{item.cdTaskGroup,jdbcType=VARCHAR},#{item.cdTaskType,jdbcType=VARCHAR},#{item.cdTag,jdbcType=VARCHAR},#{item.cdStatus,jdbcType=VARCHAR},#{item.intStar,jdbcType=BIT},#{item.dtCreate,jdbcType=TIMESTAMP},#{item.dtStart,jdbcType=TIMESTAMP},#{item.dtEnd,jdbcType=TIMESTAMP},#{item.idUser,jdbcType=VARCHAR},#{item.pctComplete,jdbcType=DECIMAL},#{item.pctOverdue,jdbcType=DECIMAL},#{item.nbrEstimateHours,jdbcType=DECIMAL},#{item.nbrActualHours,jdbcType=DECIMAL},#{item.cdPrior,jdbcType=VARCHAR},#{item.idExeUser,jdbcType=VARCHAR},#{item.cdDescription,jdbcType=VARCHAR},#{item.flagPrivate,jdbcType=CHAR},#{item.flagDelete,jdbcType=CHAR},#{item.dtDelete,jdbcType=TIMESTAMP},
       </trim>
       )
     </foreach>
@@ -489,8 +519,9 @@
   <select id="getTaskTrending" resultType="java.util.LinkedHashMap">
   SELECT DT_CREATE,count(ID_TASK) COUNT from task
   <where>
+    FLAG_DELETE &lt;&gt; 'Y'
     <if test="idProject != null and idProject != ''">
-      ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+      and ID_PROJECT = #{idProject,jdbcType=VARCHAR}
     </if>
   </where>
 GROUP BY DT_CREATE
@@ -503,6 +534,8 @@ ORDER BY DT_CREATE
        ============================================================ -->
   <sql id="Task_Page_Condition" >
     where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+      <!-- S1 任务回收站：列表/统计不显示已进回收站的任务 -->
+      and FLAG_DELETE &lt;&gt; 'Y'
       <!--
         可见性口径：
         · flagPrivate 为空（管理员传 null）：不做可见性过滤，项目下全部任务；
@@ -570,6 +603,51 @@ ORDER BY DT_CREATE
     where t.DT_END &gt;= #{from,jdbcType=TIMESTAMP}
       and t.DT_END &lt;= #{to,jdbcType=TIMESTAMP}
       and (t.CD_STATUS is null or t.CD_STATUS not in ('已结束', '已废弃'))
+      and t.FLAG_DELETE &lt;&gt; 'Y'
   </select>
+
+  <!-- ============================================================
+       S1 任务回收站：软删除 / 恢复 / 已删除列表 / 过期清理
+       ============================================================ -->
+
+  <!-- 进回收站：只改删除标记，不级联清理 -->
+  <update id="softDeleteById" parameterType="map" >
+    update task
+    set FLAG_DELETE = 'Y', DT_DELETE = now()
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </update>
+
+  <!-- 从回收站恢复 -->
+  <update id="recoverById" parameterType="map" >
+    update task
+    set FLAG_DELETE = 'N', DT_DELETE = null
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </update>
+
+  <!-- 机构内已删除任务列表（回收站展示）。join projects 过滤机构，
+       因此不能用 Base_Column_List（两表同名列会歧义），用 t.* -->
+  <select id="selectDeletedByInstitution" resultMap="BaseResultMap" parameterType="map" >
+    select t.*
+    from task t
+    join projects p on p.ID_PROJECT = t.ID_PROJECT
+    where t.FLAG_DELETE = 'Y'
+      and p.ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+    order by t.DT_DELETE desc
+  </select>
+
+  <!-- 删除时间早于 before 的已删除任务（调度器 30 天物理清理用） -->
+  <select id="selectDeletedBefore" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    from task
+    where FLAG_DELETE = 'Y'
+      and DT_DELETE &lt; #{before,jdbcType=TIMESTAMP}
+  </select>
+
+  <!-- 物理删除单条（彻底删除），级联清理由 TaskProcess 编排 -->
+  <delete id="purgeById" parameterType="map" >
+    delete from task
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </delete>
 
 </mapper>

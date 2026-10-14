@@ -58,7 +58,28 @@ import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.function.ValueProvider;
 
 public class ComFactory {
-	
+
+	/**
+	 * 构造文件接口（下载 /file/download、预览 /file/preview）的带 context-path 的 URL（S6）。
+	 * 原先各页面写死 "/file/download?fileId=..."，而 server.servlet.context-path=/work，
+	 * 浏览器按根上下文解析会 404。这里统一拼上当前请求的 context path；
+	 * 拿不到当前请求（理论上不会发生，组件都在 Vaadin 请求内构建）时退回原行为。
+	 *
+	 * @param pathAndQuery 如 "/file/download?fileId=xxx"
+	 */
+	public static String buildFileUrl(String pathAndQuery) {
+		String ctx = "";
+		try {
+			com.vaadin.flow.server.VaadinRequest request = com.vaadin.flow.server.VaadinService.getCurrentRequest();
+			if (null != request) {
+				ctx = request.getContextPath();
+			}
+		} catch (Exception ignore) {
+			// 非 Vaadin 请求上下文，退回原行为
+		}
+		return (null == ctx ? "" : ctx) + pathAndQuery;
+	}
+
 	/**
 	 * 创建一个水平布局layout ，该layout放入多个组合默认靠左侧依顺序放置
 	 * 注意：水平布局的layout，内部组件需要设置宽度，否则每个就会占据所有宽度，效果和verticalLayout一样了。

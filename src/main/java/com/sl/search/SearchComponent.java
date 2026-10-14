@@ -29,7 +29,9 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
 /**
- * 全局搜索：搜「当前项目」下的任务（名称+描述）和项目文档（文件名+备注），LIKE 模糊匹配。
+ * 全局搜索（S5）：搜当前机构全部项目下的任务（名称+描述）、任务评论、
+ * 项目文档（文件名+备注）和项目本身（名称+备注），LIKE 模糊匹配，
+ * 任务优先走 ngram 全文索引。
  */
 @SpringComponent
 @Scope("prototype")
@@ -48,8 +50,6 @@ public class SearchComponent extends VerticalLayout implements Refreshable {
 	private Grid<SearchHit> grid;
 	private Span emptyHint;
 	private Span tip;
-	/** 最近一次搜索的关键词，切项目后按它重查 */
-	private String lastKeyword;
 
 	public SearchComponent(@Autowired SearchService searchService) {
 		this.searchService = searchService;
@@ -62,11 +62,11 @@ public class SearchComponent extends VerticalLayout implements Refreshable {
 		toolbar.setAlignItems(Alignment.CENTER);
 		add(toolbar);
 		keywordField = ComFactory.getTextField();
-		keywordField.setPlaceholder("输入任务/文档关键词，回车搜索");
+		keywordField.setPlaceholder("输入任务/评论/文档/项目关键词，回车搜索");
 		keywordField.setWidth("320px");
 		keywordField.addKeyDownListener(com.vaadin.flow.component.Key.ENTER, e -> doSearch());
 		typeBox = ComFactory.getCombobox();
-		typeBox.setItems("全部", "任务", "文档");
+		typeBox.setItems("全部", "任务", "评论", "文档", "项目");
 		typeBox.setValue("全部");
 		Button searchBtn = ComFactory.getPrimaryBtn("搜索", VaadinIcon.SEARCH);
 		searchBtn.addClickListener(e -> doSearch());
@@ -82,14 +82,16 @@ public class SearchComponent extends VerticalLayout implements Refreshable {
 		grid.setHeight("520px");
 		grid.setSelectionMode(SelectionMode.NONE);
 		grid.addColumn(SearchHit::getTypeName).setHeader("类型").setAutoWidth(true).setFlexGrow(0);
+		// S5：跨项目搜索，项目名列让用户知道命中落在哪个项目里
+		grid.addColumn(h -> null == h.getNameProject() ? "" : h.getNameProject())
+				.setHeader("所属项目").setAutoWidth(true).setFlexGrow(0).setResizable(true);
 		// autoWidth + flexGrow：列宽随容器伸缩，内容不会把表格撑出横向滚动条
 		grid.addColumn(this::plainTitle).setHeader("标题").setAutoWidth(true).setFlexGrow(1).setResizable(true);
 		grid.addColumn(h -> plainSummary(h.getCdContent())).setHeader("内容摘要").setAutoWidth(true)
 				.setFlexGrow(2).setResizable(true);
 		grid.addComponentColumn(h -> {
 			Button b = ComFactory.getTertriayBtn("查看", VaadinIcon.LIST);
-			b.setVisible(SearchHit.TYPE_TASK.equals(h.getCdType()));
-			b.addClickListener(e -> openTask(h.getIdBiz()));
+			b.addClickListener(e -> openHit(h));
 			return b;
 		}).setHeader("操作").setAutoWidth(true).setFlexGrow(0);
 		add(grid);
@@ -102,24 +104,21 @@ public class SearchComponent extends VerticalLayout implements Refreshable {
 
 	@Override
 	public void refresh() {
-		// 顶栏切换项目：清空旧结果，提示语跟着新项目走
-		lastKeyword = null;
+		// 搜索范围是整个机构，切换项目不影响结果；这里仅清空旧结果
 		grid.setItems(new ArrayList<>());
 		ComFactory.toggleEmptyHint(emptyHint, -1);
 		updateTip();
 	}
 
 	private void updateTip() {
-		Project p = ComponentUtil.getCurrentProject();
-		String projectName = null == p ? "（未选择）" : p.getNameProject();
-		tip.setText("搜索范围为当前项目「" + projectName + "」下的任务（名称、描述）和项目文档（文件名、备注），"
-				+ "支持模糊匹配：输入任意片段即可，不必输全。");
+		tip.setText("搜索范围为当前机构的全部项目：任务（名称、描述）、任务评论、项目文档（文件名、备注）"
+				+ "和项目（名称、备注），支持模糊匹配：输入任意片段即可，不必输全。");
 	}
 
 	private void doSearch() {
-		Project p = ComponentUtil.getCurrentProject();
-		if (null == p) {
-			ComFactory.notification("请先在顶部选择项目");
+		String institution = ComponentUtil.getCurrentInstitution();
+		if (null == institution || institution.isBlank()) {
+			ComFactory.notification("请先登录");
 			return;
 		}
 		String kw = keywordField.getValue();
@@ -131,22 +130,25 @@ public class SearchComponent extends VerticalLayout implements Refreshable {
 		String label = typeBox.getValue();
 		if ("任务".equals(label)) {
 			type = SearchHit.TYPE_TASK;
+		} else if ("评论".equals(label)) {
+			type = SearchHit.TYPE_COMMENT;
 		} else if ("文档".equals(label)) {
 			type = SearchHit.TYPE_DOC;
+		} else if ("项目".equals(label)) {
+			type = SearchHit.TYPE_PROJECT;
 		}
 		List<SearchHit> hits;
 		try {
-			hits = searchService.search(kw, type, p.getIdProject());
+			hits = searchService.search(kw, type, institution);
 		} catch (Exception e) {
 			log.error("搜索失败，keyword={}", kw, e);
 			ComFactory.notificationError("搜索失败", e);
 			return;
 		}
-		lastKeyword = kw;
 		grid.setItems(hits);
 		ComFactory.toggleEmptyHint(emptyHint, hits.size());
 		if (hits.isEmpty()) {
-			ComFactory.notification("在当前项目下没有找到匹配的内容");
+			ComFactory.notification("没有找到匹配的内容");
 		}
 	}
 
@@ -172,6 +174,35 @@ public class SearchComponent extends VerticalLayout implements Refreshable {
 			return null == s ? "" : s;
 		}
 		return s.substring(0, max) + "…";
+	}
+
+	/** 按命中类型跳转：任务/评论→任务详情，文档→项目文档页，项目→项目查看页 */
+	private void openHit(SearchHit h) {
+		switch (h.getCdType() == null ? "" : h.getCdType()) {
+		case SearchHit.TYPE_TASK, SearchHit.TYPE_COMMENT -> openTask(h.getIdBiz());
+		case SearchHit.TYPE_DOC -> {
+			com.sl.project.ProjectDocumentComponent c = ComponentUtil.applicationContext
+					.getBean(com.sl.project.ProjectDocumentComponent.class);
+			TabsUtil.addComponentTab("项目文档", "项目文档", c);
+		}
+		case SearchHit.TYPE_PROJECT -> {
+			com.sl.entity.Project p = ComponentUtil.applicationContext
+					.getBean(com.sl.service.ProjectProcess.class)
+					.getProjectById(h.getIdBiz());
+			if (null == p) {
+				ComFactory.notification("项目不存在或已被删除");
+				return;
+			}
+			com.sl.project.ProjectCreateComponent view = ComponentUtil.applicationContext
+					.getBean(com.sl.project.ProjectCreateComponent.class);
+			view.setProject(p);
+			view.setUpdateFlag(true);
+			TabsUtil.addComponentTab("查看项目-" + p.getIdProject(), "查看项目", view);
+		}
+		default -> {
+			// 未知类型不跳转
+		}
+		}
 	}
 
 	private void openTask(String idTask) {

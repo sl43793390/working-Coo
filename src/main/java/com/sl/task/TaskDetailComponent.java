@@ -20,8 +20,10 @@ import com.sl.entity.ProjectTaskFile;
 import com.sl.entity.OperationLog;
 import com.sl.entity.ProjectType;
 import com.sl.entity.Task;
+import com.sl.entity.TaskChecklistItem;
 import com.sl.entity.TaskComment;
 import com.sl.entity.TaskDependency;
+import com.sl.entity.TaskSubtask;
 import com.sl.entity.User;
 import com.sl.service.NotificationService;
 import com.sl.service.OperationLogService;
@@ -33,6 +35,10 @@ import com.sl.util.Util;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.IFrame;
+import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -48,6 +54,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.IdUtil;
 
 /**
  * 任务详情
@@ -99,6 +106,20 @@ public class TaskDetailComponent extends HorizontalLayout {
 	private NotificationService notificationService;
 
 	private TextArea commentRemark;
+
+	// S7 子任务
+	private TextField subtaskInput;
+	private Grid<TaskSubtask> subtaskGrid;
+	private Span subtaskSummary;
+
+	// S4 检查清单
+	private TextField checklistInput;
+	private VerticalLayout checklistBox;
+	private Span checklistProgress;
+
+	// S8 @提及联想
+	private ComboBox<User> mentionBox;
+
 	public TaskDetailComponent(@Autowired TaskProcess taskProcess,
 			@Autowired ProjectProcess projectProcess,
 			@Autowired UserManageMentProcess userManageMentProcess,
@@ -271,14 +292,67 @@ public class TaskDetailComponent extends HorizontalLayout {
 		VerticalLayout layoutLeft = ComFactory.getVerticalLayout();
 		layoutLeft.setWidth("30%");
 		contentLayout.add(layoutLeft);
+
+		// S7 子任务区
+		layoutLeft.add(ComFactory.getLabel("子任务："));
+		subtaskInput = ComFactory.getTextField();
+		subtaskInput.setPlaceholder("输入子任务名称");
+		subtaskInput.setWidthFull();
+		Button addSubBtn = ComFactory.getPrimaryBtn("添加", VaadinIcon.PLUS);
+		addSubBtn.addClickListener(e -> addSubtask());
+		HorizontalLayout subBar = new HorizontalLayout(subtaskInput, addSubBtn);
+		subBar.setWidthFull();
+		layoutLeft.add(subBar);
+		subtaskGrid = ComFactory.getGrid(TaskSubtask.class);
+		subtaskGrid.setHeight("170px");
+		subtaskGrid.setSelectionMode(SelectionMode.NONE);
+		subtaskGrid.addComponentColumn(this::subtaskDoneCell)
+				.setHeader("完成").setAutoWidth(true).setFlexGrow(0);
+		subtaskGrid.addColumn(TaskSubtask::getNameTask).setHeader("名称").setResizable(true);
+		subtaskGrid.addComponentColumn(s -> {
+			Button del = ComFactory.getTertriayBtn("删除", VaadinIcon.TRASH);
+			del.addClickListener(ev -> {
+				taskProcess.deleteSubtask(s.getIdSubtask());
+				reloadSubtasks();
+			});
+			return del;
+		}).setHeader("操作").setAutoWidth(true).setFlexGrow(0);
+		layoutLeft.add(subtaskGrid);
+		subtaskSummary = ComFactory.getLabel("");
+		layoutLeft.add(subtaskSummary);
+
+		// S4 检查清单区
+		layoutLeft.add(ComFactory.getLabel("检查清单："));
+		checklistInput = ComFactory.getTextField();
+		checklistInput.setPlaceholder("输入清单项内容");
+		checklistInput.setWidthFull();
+		Button addChkBtn = ComFactory.getPrimaryBtn("添加", VaadinIcon.PLUS);
+		addChkBtn.addClickListener(e -> addChecklistItem());
+		HorizontalLayout chkBar = new HorizontalLayout(checklistInput, addChkBtn);
+		chkBar.setWidthFull();
+		layoutLeft.add(chkBar);
+		checklistBox = ComFactory.getVerticalLayout();
+		checklistBox.setPadding(false);
+		checklistBox.setSpacing(false);
+		layoutLeft.add(checklistBox);
+		checklistProgress = ComFactory.getLabel("");
+		layoutLeft.add(checklistProgress);
+
 		//任务文件列表
 		docGrid = ComFactory.getGrid(ProjectTaskFile.class);
-		docGrid.setHeight("500px");
+		docGrid.setHeight("360px");
 		docGrid.setSelectionMode(SelectionMode.NONE);
 		docGrid.addColumn(ProjectTaskFile::getNameFile).setHeader("文件名").setResizable(true);
 		docGrid.addColumn( e->{return DateUtil.formatDate(e.getDtUpload());}).setHeader("上传时间").setResizable(true);
+		// S6 预览：图片内嵌显示，PDF 内嵌 viewer，其余类型不支持（下载查看）
+		docGrid.addComponentColumn(f -> {
+			Button previewBtn = ComFactory.getTertriayBtn("预览", VaadinIcon.EYE);
+			previewBtn.setVisible(isPreviewable(f.getNameFile()));
+			previewBtn.addClickListener(e -> openPreview(f));
+			return previewBtn;
+		}).setHeader("预览").setAutoWidth(true).setFlexGrow(0);
 		docGrid.addComponentColumn(e ->{
-			Anchor an = new Anchor("/file/download?fileId="+e.getIdFile(), "下载", AnchorTarget.BLANK);
+			Anchor an = new Anchor(ComFactory.buildFileUrl("/file/download?fileId="+e.getIdFile()), "下载", AnchorTarget.BLANK);
 			return an;
 		}).setHeader("下载");
 		layoutLeft.add(ComFactory.getLabel("文件列表："));
@@ -292,11 +366,30 @@ public class TaskDetailComponent extends HorizontalLayout {
 		remark.getStyle().set("margin-top", "1px");
 		right.add(ComFactory.getLabel("备注："));
 		right.add(remark);
+		// S8 @提及联想：下拉选成员直接把 @姓名 插进评论框，不再靠手打名字
+		mentionBox = ComFactory.getCombobox(User.class);
+		mentionBox.setPlaceholder("提及成员（选其姓名插入 @提醒）");
+		mentionBox.setWidthFull();
+		mentionBox.setClearButtonVisible(true);
+		mentionBox.setItemLabelGenerator(u -> u.getUserName() + "（" + u.getUserId() + "）");
+		mentionBox.addValueChangeListener(e -> {
+			User picked = e.getValue();
+			if (null != picked && null != picked.getUserName()) {
+				String cur = commentRemark.getValue() == null ? "" : commentRemark.getValue();
+				String mention = "@" + picked.getUserName() + " ";
+				if (!cur.contains(mention.trim())) {
+					commentRemark.setValue(cur + (cur.isEmpty() || cur.endsWith(" ") ? "" : "") + mention);
+				}
+				mentionBox.setValue(null);
+				commentRemark.focus();
+			}
+		});
+		right.add(mentionBox);
 		commentRemark = ComFactory.getTextArea();
-		commentRemark.setHeight("245px");
+		commentRemark.setHeight("200px");
 		right.add(ComFactory.getLabel("为该任务添加评论或留言："));
 		right.add(commentRemark);
-		
+
 		Button primaryBtn = ComFactory.getPrimaryBtn("发布留言");
 		primaryBtn.addClickListener(e ->{
 			if (saveComment() != 0) {
@@ -304,7 +397,110 @@ public class TaskDetailComponent extends HorizontalLayout {
 			}
 		});
 		right.add(primaryBtn);
-		
+
+	}
+
+	/** 子任务行首的完成勾选框：勾选/取消会汇总进度到父任务 */
+	private Checkbox subtaskDoneCell(TaskSubtask s) {
+		Checkbox box = new Checkbox("已结束".equals(s.getCdStatus()));
+		box.addValueChangeListener(e -> {
+			if (e.isFromClient()) {
+				taskProcess.toggleSubtaskDone(s.getIdSubtask(), Boolean.TRUE.equals(e.getValue()));
+				reloadSubtasks();
+			}
+		});
+		return box;
+	}
+
+	private void addSubtask() {
+		String name = subtaskInput.getValue();
+		if (null == name || name.isBlank()) {
+			ComFactory.notification("请输入子任务名称");
+			return;
+		}
+		TaskSubtask sub = new TaskSubtask();
+		sub.setIdSubtask(IdUtil.getSnowflakeNextIdStr());
+		sub.setIdProject(task.getIdProject());
+		sub.setIdTaskParent(task.getIdTask());
+		sub.setNameTask(name.trim());
+		sub.setCdTaskGroup(task.getCdTaskGroup() == null ? "默认分组" : task.getCdTaskGroup());
+		sub.setCdStatus("未开始");
+		sub.setPctComplete(0d);
+		sub.setDtCreate(new Date());
+		sub.setDtEnd(task.getDtEnd());
+		sub.setIdUser(ComponentUtil.getCurrentUser().getUserId());
+		taskProcess.addSubtask(sub);
+		subtaskInput.setValue("");
+		reloadSubtasks();
+	}
+
+	private void reloadSubtasks() {
+		if (null == task) {
+			return;
+		}
+		List<TaskSubtask> subs = taskProcess.getSubtasks(task.getIdTask());
+		subtaskGrid.setItems(subs);
+		long done = subs.stream().filter(s -> "已结束".equals(s.getCdStatus())).count();
+		subtaskSummary.setText(subs.isEmpty() ? "暂无子任务" : "已完成 " + done + "/" + subs.size()
+				+ "（父任务完成率已按此汇总）");
+	}
+
+	private void addChecklistItem() {
+		String content = checklistInput.getValue();
+		if (null == content || content.isBlank()) {
+			ComFactory.notification("请输入清单项内容");
+			return;
+		}
+		TaskChecklistItem item = new TaskChecklistItem();
+		item.setIdItem(IdUtil.getSnowflakeNextIdStr());
+		item.setIdProject(task.getIdProject());
+		item.setIdTask(task.getIdTask());
+		item.setCdContent(content.trim());
+		item.setFlagDone(TaskChecklistItem.FLAG_DONE_N);
+		item.setNbrOrder(0);
+		item.setIdUser(ComponentUtil.getCurrentUser().getUserId());
+		item.setDtCreate(new Date());
+		taskProcess.addChecklistItem(item);
+		checklistInput.setValue("");
+		reloadChecklist();
+	}
+
+	private void reloadChecklist() {
+		if (null == task) {
+			return;
+		}
+		List<TaskChecklistItem> items = taskProcess.getChecklist(task.getIdTask());
+		checklistBox.removeAll();
+		for (TaskChecklistItem item : items) {
+			Checkbox box = new Checkbox(item.getCdContent(), item.isDone());
+			box.addValueChangeListener(e -> {
+				if (e.isFromClient()) {
+					taskProcess.toggleChecklistItem(item.getIdItem(), Boolean.TRUE.equals(e.getValue()));
+					updateChecklistProgress(items);
+				}
+			});
+			Button del = ComFactory.getTertriayBtn("", VaadinIcon.CLOSE_SMALL);
+			del.setTooltipText("删除清单项");
+			del.addClickListener(e -> {
+				taskProcess.deleteChecklistItem(item.getIdItem());
+				reloadChecklist();
+			});
+			HorizontalLayout row = new HorizontalLayout(box, del);
+			row.setSpacing(false);
+			row.setPadding(false);
+			row.getStyle().set("align-items", "center");
+			checklistBox.add(row);
+		}
+		updateChecklistProgress(items);
+	}
+
+	private void updateChecklistProgress(List<TaskChecklistItem> items) {
+		if (items.isEmpty()) {
+			checklistProgress.setText("暂无清单项");
+			return;
+		}
+		long done = items.stream().filter(TaskChecklistItem::isDone).count();
+		checklistProgress.setText("已完成 " + done + "/" + items.size());
 	}
 
 	private Integer saveComment() {
@@ -355,6 +551,61 @@ public class TaskDetailComponent extends HorizontalLayout {
 		List<ProjectTaskFile> fileList = projectProcess.getTaskFileList(ComponentUtil.getCurrentProject().getIdProject(),task.getIdTask());
 		docGrid.setItems(fileList);
 		loadDependencyAndHistory();
+		// S4/S7/S8：清单、子任务、提及候选
+		reloadChecklist();
+		reloadSubtasks();
+		List<User> members = userManageMentProcess
+				.selectUserByIdInstitution(ComponentUtil.getCurrentInstitution());
+		mentionBox.setItems(members);
+	}
+
+	// ==================== S6 附件预览（图片 / PDF） ====================
+
+	private static final java.util.Set<String> IMAGE_EXTS = java.util.Set.of(
+			"png", "jpg", "jpeg", "gif", "webp", "bmp", "svg");
+
+	/** 图片/PDF 可直接在线预览，其余类型只能下载查看 */
+	private static boolean isPreviewable(String fileName) {
+		String ext = ext(fileName);
+		return IMAGE_EXTS.contains(ext) || "pdf".equals(ext);
+	}
+
+	private static String ext(String name) {
+		if (null == name) {
+			return "";
+		}
+		int idx = name.lastIndexOf('.');
+		return idx < 0 ? "" : name.substring(idx + 1).toLowerCase();
+	}
+
+	/**
+	 * 打开预览弹窗：图片用 <img>，PDF 用内嵌 iframe（浏览器自带 viewer）。
+	 * 走 FileController 的 /file/preview（inline），鉴权与下载一致。
+	 */
+	private void openPreview(ProjectTaskFile f) {
+		Dialog dlg = new Dialog();
+		dlg.setHeaderTitle(f.getNameFile());
+		dlg.setWidth("860px");
+		dlg.setHeight("640px");
+		dlg.setCloseOnOutsideClick(true);
+		String ext = ext(f.getNameFile());
+		if ("pdf".equals(ext)) {
+			IFrame frame = new IFrame(ComFactory.buildFileUrl("/file/preview?fileId=" + f.getIdFile()));
+			frame.setSizeFull();
+			dlg.add(frame);
+		} else {
+			Image img = new Image(ComFactory.buildFileUrl("/file/preview?fileId=" + f.getIdFile()), f.getNameFile());
+			img.setMaxWidth("100%");
+			img.setMaxHeight("100%");
+			VerticalLayout wrap = new VerticalLayout(img);
+			wrap.setAlignItems(Alignment.CENTER);
+			wrap.setSizeFull();
+			dlg.add(wrap);
+		}
+		Button close = ComFactory.getPrimaryBtn("关闭");
+		close.addClickListener(e -> dlg.close());
+		dlg.getFooter().add(close);
+		dlg.open();
 	}
 
 	private void selectBoxContent() {

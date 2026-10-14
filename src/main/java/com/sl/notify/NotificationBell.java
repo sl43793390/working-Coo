@@ -34,36 +34,41 @@ import com.vaadin.flow.spring.annotation.SpringComponent;
  * <p>
  * 未读数挂在按钮文本上（红点，样式见 styles.css 的 .notification-bell-unread）。
  * <p>
- * 刷新策略：挂载期间每 15 秒轮询一次 {@link #refreshBadge()}，打开弹窗时再全量重查。
- * 不接 Vaadin Push——单 UI 轮询在项目规模下足够，且不用为每个 UI 维护推送通道。
- * bell 是 prototype bean，每次导航都会新建，所以轮询的注册/摘除必须放在
- * onAttach/onDetach：导航走后不摘 listener，会留着每 15 秒一次的空查询。
+ * 刷新策略（S3 升级）：服务端写入新通知时经 {@link NotificationBroadcaster} 经
+ * Push（WebSocket）实时推送刷新；推送不可达时降级为低频轮询（60 秒）兜底。
+ * bell 是 prototype bean，每次导航都会新建，所以订阅/轮询的注册/摘除必须放在
+ * onAttach/onDetach：导航走后不摘 listener，会留着无效的订阅与空查询。
  */
 @SpringComponent
 @Scope("prototype")
-public class NotificationBell extends Button {
+public class NotificationBell extends Button implements NotificationBroadcaster.Listener {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = LoggerFactory.getLogger(NotificationBell.class);
 
 	private static final int PAGE_SIZE = 20;
 
-	/** 轮询间隔（毫秒）。调度器最快 5 分钟扫一批，15 秒足够及时又不吵 */
-	private static final int POLL_INTERVAL_MS = 15_000;
+	/** 兜底轮询间隔（毫秒）。Push 正常时用不上，只在 WebSocket 不可达时生效 */
+	private static final int POLL_INTERVAL_MS = 60_000;
 
 	private final NotificationService notificationService;
 	private final TaskProcess taskProcess;
+	private final NotificationBroadcaster broadcaster;
 
 	private Dialog dialog;
 	private Grid<Notification> grid;
 	private Span emptyHint;
-	/** 轮询监听句柄，detach 时摘掉 */
+	/** 兜底轮询监听句柄，detach 时摘掉 */
 	private Registration pollRegistration;
+	/** Push 广播订阅句柄，detach 时摘掉 */
+	private Registration broadcastRegistration;
 
 	public NotificationBell(@Autowired NotificationService notificationService,
-			@Autowired TaskProcess taskProcess) {
+			@Autowired TaskProcess taskProcess,
+			@Autowired NotificationBroadcaster broadcaster) {
 		this.notificationService = notificationService;
 		this.taskProcess = taskProcess;
+		this.broadcaster = broadcaster;
 		setIcon(new Icon(VaadinIcon.BELL));
 		addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
 		addClassName("notification-bell");
@@ -74,8 +79,8 @@ public class NotificationBell extends Button {
 	}
 
 	/**
-	 * 挂到 UI 后开始轮询未读数。poll 回调在 VaadinSession 锁内执行，
-	 * 直接 setText 改按钮状态是安全的。
+	 * 挂到 UI 后：订阅实时广播 + 保留低频轮询兜底。
+	 * poll 回调在 VaadinSession 锁内执行，直接 setText 改按钮状态是安全的。
 	 */
 	@Override
 	protected void onAttach(AttachEvent attachEvent) {
@@ -83,9 +88,10 @@ public class NotificationBell extends Button {
 		UI ui = attachEvent.getUI();
 		ui.setPollInterval(POLL_INTERVAL_MS);
 		pollRegistration = ui.addPollListener(e -> refreshBadge());
+		broadcastRegistration = broadcaster.addListener(this);
 	}
 
-	/** 视图销毁（导航离开/退出登录）时停轮询，别留后台空查询 */
+	/** 视图销毁（导航离开/退出登录）时摘掉订阅与轮询，别留后台空查询 */
 	@Override
 	protected void onDetach(DetachEvent detachEvent) {
 		super.onDetach(detachEvent);
@@ -93,7 +99,22 @@ public class NotificationBell extends Button {
 			pollRegistration.remove();
 			pollRegistration = null;
 		}
+		if (null != broadcastRegistration) {
+			broadcastRegistration.remove();
+			broadcastRegistration = null;
+		}
 		detachEvent.getUI().setPollInterval(-1);
+	}
+
+	@Override
+	public String getUserId() {
+		return currentUserId();
+	}
+
+	/** 广播回调：已在 UI.access 锁内，直接刷新红点 */
+	@Override
+	public void onNotification() {
+		refreshBadge();
 	}
 
 	/** 外部（例如任务保存后）可以调它刷新红点 */

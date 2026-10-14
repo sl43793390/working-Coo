@@ -9,14 +9,16 @@
     <result column="NAME_TITLE" property="nameTitle" jdbcType="VARCHAR" />
     <result column="CD_CONTENT" property="cdContent" jdbcType="VARCHAR" />
     <result column="DT_CREATE" property="dtCreate" jdbcType="TIMESTAMP" />
+    <result column="NAME_PROJECT" property="nameProject" jdbcType="VARCHAR" />
   </resultMap>
 
-  <!-- 当前项目内搜任务：名称 + 描述，LIKE 模糊匹配 -->
+  <!-- 当前项目内搜任务：名称 + 描述，LIKE 模糊匹配（旧入口保留，页面已切全局搜索） -->
   <select id="searchTasksLike" resultMap="SearchHitMap" parameterType="map" >
     select 'TASK' as CD_TYPE, ID_TASK as ID_BIZ, ID_PROJECT,
            NAME_TASK as NAME_TITLE, CD_DESCRIPTION as CD_CONTENT, DT_CREATE
     from task
     where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+      and FLAG_DELETE &lt;&gt; 'Y'
       and (NAME_TASK like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
            or CD_DESCRIPTION like concat('%', #{keyword,jdbcType=VARCHAR}, '%'))
     order by DT_CREATE desc
@@ -32,6 +34,79 @@
       and (NAME_FILE like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
            or CD_COMMENT like concat('%', #{keyword,jdbcType=VARCHAR}, '%'))
     order by DT_UPLOAD desc
+    limit #{limit}
+  </select>
+
+  <!-- ============================================================
+       S5 跨项目搜索（按机构过滤）。任务排除回收站（FLAG_DELETE='Y'）。
+       全文索引查询走 natural language mode，查询串里的特殊字符由
+       ngram 分词器消化，不做 SQL 拼接，无注入面。
+       ============================================================ -->
+
+  <select id="searchTasksFt" resultMap="SearchHitMap" parameterType="map" >
+    select 'TASK' as CD_TYPE, t.ID_TASK as ID_BIZ, t.ID_PROJECT as ID_PROJECT,
+           t.NAME_TASK as NAME_TITLE, t.CD_DESCRIPTION as CD_CONTENT, t.DT_CREATE as DT_CREATE,
+           p.NAME_PROJECT as NAME_PROJECT
+    from task t
+    join projects p on p.ID_PROJECT = t.ID_PROJECT
+    where p.ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and t.FLAG_DELETE &lt;&gt; 'Y'
+      and match(t.NAME_TASK, t.CD_DESCRIPTION) against(#{keyword,jdbcType=VARCHAR} in natural language mode)
+    order by t.DT_CREATE desc
+    limit #{limit}
+  </select>
+
+  <select id="searchTasksLikeGlobal" resultMap="SearchHitMap" parameterType="map" >
+    select 'TASK' as CD_TYPE, t.ID_TASK as ID_BIZ, t.ID_PROJECT as ID_PROJECT,
+           t.NAME_TASK as NAME_TITLE, t.CD_DESCRIPTION as CD_CONTENT, t.DT_CREATE as DT_CREATE,
+           p.NAME_PROJECT as NAME_PROJECT
+    from task t
+    join projects p on p.ID_PROJECT = t.ID_PROJECT
+    where p.ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and t.FLAG_DELETE &lt;&gt; 'Y'
+      and (t.NAME_TASK like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
+           or t.CD_DESCRIPTION like concat('%', #{keyword,jdbcType=VARCHAR}, '%'))
+    order by t.DT_CREATE desc
+    limit #{limit}
+  </select>
+
+  <select id="searchCommentsGlobal" resultMap="SearchHitMap" parameterType="map" >
+    select 'COMMENT' as CD_TYPE, c.ID_TASK as ID_BIZ, t.ID_PROJECT as ID_PROJECT,
+           t.NAME_TASK as NAME_TITLE, c.CD_COMMENT as CD_CONTENT, c.DT_COMMENT as DT_CREATE,
+           p.NAME_PROJECT as NAME_PROJECT
+    from task_comment c
+    join task t on t.ID_TASK = c.ID_TASK
+    join projects p on p.ID_PROJECT = t.ID_PROJECT
+    where p.ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and t.FLAG_DELETE &lt;&gt; 'Y'
+      and c.CD_COMMENT like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
+    order by c.DT_COMMENT desc
+    limit #{limit}
+  </select>
+
+  <select id="searchDocsGlobal" resultMap="SearchHitMap" parameterType="map" >
+    select 'DOC' as CD_TYPE, f.ID_FILE as ID_BIZ, f.ID_PROJECT as ID_PROJECT,
+           f.NAME_FILE as NAME_TITLE, f.CD_COMMENT as CD_CONTENT, f.DT_UPLOAD as DT_CREATE,
+           p.NAME_PROJECT as NAME_PROJECT
+    from project_task_file f
+    join projects p on p.ID_PROJECT = f.ID_PROJECT
+    where p.ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and (f.NAME_FILE like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
+           or f.CD_COMMENT like concat('%', #{keyword,jdbcType=VARCHAR}, '%'))
+    order by f.DT_UPLOAD desc
+    limit #{limit}
+  </select>
+
+  <select id="searchProjectsGlobal" resultMap="SearchHitMap" parameterType="map" >
+    select 'PROJECT' as CD_TYPE, p.ID_PROJECT as ID_BIZ, p.ID_PROJECT as ID_PROJECT,
+           p.NAME_PROJECT as NAME_TITLE, p.CD_COMMENT as CD_CONTENT, p.DT_CREATE as DT_CREATE,
+           p.NAME_PROJECT as NAME_PROJECT
+    from projects p
+    where p.ID_INSTITUTION = #{idInstitution,jdbcType=VARCHAR}
+      and p.FLAG_DELETE &lt;&gt; 'Y'
+      and (p.NAME_PROJECT like concat('%', #{keyword,jdbcType=VARCHAR}, '%')
+           or p.CD_COMMENT like concat('%', #{keyword,jdbcType=VARCHAR}, '%'))
+    order by p.DT_CREATE desc
     limit #{limit}
   </select>
 

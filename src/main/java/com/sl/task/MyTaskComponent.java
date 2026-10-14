@@ -188,7 +188,7 @@ public class MyTaskComponent extends VerticalLayout implements Refreshable {
 			}
 			try {
 				taskProcess.deleteTask(t);
-				ComFactory.notificationSuccess("删除成功");
+				ComFactory.notificationSuccess("已删除，可在后台-任务回收站恢复");
 				// 重新挂 DataProvider：删除后总数变了，顺手把空态提示也刷新
 				applyDataProvider();
 			} catch (Exception ex) {
@@ -265,7 +265,7 @@ public class MyTaskComponent extends VerticalLayout implements Refreshable {
 			deleteBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
 			deleteBtn.addClickListener(e -> {
 					this.selectedTask = com;
-					deleteDialog.setText("确认删除任务「" + com.getNameTask() + "」？删除后不可恢复，其子任务、执行人关联和留言将一并删除。");
+					deleteDialog.setText("确认删除任务「" + com.getNameTask() + "」？删除后任务进入后台的任务回收站（保留 30 天），其子任务、执行人关联和留言在恢复前不可见。");
 					deleteDialog.open();
 				});
 				ops.add(deleteBtn);

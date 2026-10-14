@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 全文搜索的命中项（T2-8）。
- * 三种来源（任务 / 评论 / 文档）统一成一种结构，页面里一张表展示。
+ * 全局搜索的命中项（T2-8 / S5 升级为跨项目）。
+ * 四种来源（任务 / 评论 / 文档 / 项目）统一成一种结构，页面里一张表展示。
  */
 public class SearchHit implements Serializable {
 
@@ -14,6 +14,7 @@ public class SearchHit implements Serializable {
 	public static final String TYPE_TASK = "TASK";
 	public static final String TYPE_COMMENT = "COMMENT";
 	public static final String TYPE_DOC = "DOC";
+	public static final String TYPE_PROJECT = "PROJECT";
 
 	private String cdType;
 
@@ -26,6 +27,17 @@ public class SearchHit implements Serializable {
 	private String cdContent;
 
 	private Date dtCreate;
+
+	/** 命中项所属项目名（跨项目搜索时展示，非数据库 task 表字段） */
+	private String nameProject;
+
+	public String getNameProject() {
+		return nameProject;
+	}
+
+	public void setNameProject(String nameProject) {
+		this.nameProject = nameProject;
+	}
 
 	public String getCdType() {
 		return cdType;
@@ -84,6 +96,9 @@ public class SearchHit implements Serializable {
 		}
 		if (TYPE_DOC.equals(cdType)) {
 			return "文档";
+		}
+		if (TYPE_PROJECT.equals(cdType)) {
+			return "项目";
 		}
 		return cdType;
 	}

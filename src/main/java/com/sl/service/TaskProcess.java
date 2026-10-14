@@ -1,6 +1,7 @@
 package com.sl.service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +57,10 @@ public class TaskProcess {
 	private UserMapper userMapper;
 	@Autowired
 	private NotificationService notificationService;
+	@Autowired
+	private com.sl.mapper.TaskChecklistMapper taskChecklistMapper;
+	@Autowired
+	private com.sl.mapper.TaskDependencyMapper taskDependencyMapper;
 
 	/**
 	 * 查询当前项目下创建的所有公开的任务，管理员角色调用的方法，普通用户只能查看分配给自己的任务
@@ -64,7 +69,8 @@ public class TaskProcess {
 	 */
 	public List<Task> getTaskByIdProject(String idProject){
 		TaskExample example = new TaskExample();
-		example.createCriteria().andIdProjectEqualTo(idProject).andFlagPrivateEqualTo("Y");
+		example.createCriteria().andIdProjectEqualTo(idProject).andFlagPrivateEqualTo("Y")
+				.andFlagDeleteNotEqualTo("Y");
 		List<Task> selectByExample = taskMapper.selectByExample(example);
 		return selectByExample;
 	}
@@ -81,7 +87,8 @@ public class TaskProcess {
 	 */
 	public List<Task> getTasksVisibleTo(String idProject, String viewUserId, boolean allVisible) {
 		TaskExample example = new TaskExample();
-		Criteria visible = example.createCriteria().andIdProjectEqualTo(idProject);
+		Criteria visible = example.createCriteria().andIdProjectEqualTo(idProject)
+				.andFlagDeleteNotEqualTo("Y");
 		if (allVisible) {
 			// 管理员：项目下全部任务
 			example.setOrderByClause("DT_CREATE desc");
@@ -90,11 +97,13 @@ public class TaskProcess {
 		visible.andFlagPrivateEqualTo("Y");
 		if (null != viewUserId && !viewUserId.isBlank()) {
 			// 自己创建的（含私有）
-			example.or().andIdProjectEqualTo(idProject).andIdUserEqualTo(viewUserId);
+			example.or().andIdProjectEqualTo(idProject).andIdUserEqualTo(viewUserId)
+					.andFlagDeleteNotEqualTo("Y");
 			// 分派给自己的（含别人创建的私有任务）
 			List<String> myTaskIds = getTaskIdByUserId(idProject, viewUserId);
 			if (null != myTaskIds && !myTaskIds.isEmpty()) {
-				example.or().andIdProjectEqualTo(idProject).andIdTaskIn(myTaskIds);
+				example.or().andIdProjectEqualTo(idProject).andIdTaskIn(myTaskIds)
+						.andFlagDeleteNotEqualTo("Y");
 			}
 		}
 		example.setOrderByClause("DT_CREATE desc");
@@ -127,7 +136,8 @@ public class TaskProcess {
 	public List<Task> getTaskByCondition(String idProject, Task task,List<String> taskIds){
 		TaskExample example = new TaskExample();
 		Criteria createCriteria = example.createCriteria();
-		createCriteria.andIdProjectEqualTo(idProject).andFlagPrivateEqualTo("Y");
+		createCriteria.andIdProjectEqualTo(idProject).andFlagPrivateEqualTo("Y")
+				.andFlagDeleteNotEqualTo("Y");
 		if (taskIds != null && !taskIds.isEmpty()) {
 			createCriteria.andIdTaskIn(taskIds);
 		}
@@ -157,7 +167,12 @@ public class TaskProcess {
 		if (null == idTask || idTask.isBlank()) {
 			return null;
 		}
-		return taskMapper.selectByPrimaryKey(idTask);
+		Task t = taskMapper.selectByPrimaryKey(idTask);
+		// 已进回收站的任务对外视为不存在（详情页/通知跳转都走这里）
+		if (null != t && "Y".equals(t.getFlagDelete())) {
+			return null;
+		}
+		return t;
 	}
 
 	/**
@@ -224,7 +239,7 @@ public class TaskProcess {
 	 */
 	public List<Task> getTasksWithSchedule(String idProject) {
 		TaskExample ex = new TaskExample();
-		ex.createCriteria().andIdProjectEqualTo(idProject);
+		ex.createCriteria().andIdProjectEqualTo(idProject).andFlagDeleteNotEqualTo("Y");
 		ex.setOrderByClause("DT_START ASC, DT_END ASC");
 		List<Task> list = taskMapper.selectByExample(ex);
 		fillExecutorNames(list);
@@ -291,7 +306,7 @@ public class TaskProcess {
 			return new ArrayList<Task>();
 		}
 		TaskExample taske = new TaskExample();
-		taske.createCriteria().andIdTaskIn(resultsIds);
+		taske.createCriteria().andIdTaskIn(resultsIds).andFlagDeleteNotEqualTo("Y");
 		List<Task> selectByExample2 = taskMapper.selectByExample(taske);
 		return selectByExample2;
 	}
@@ -412,22 +427,97 @@ public class TaskProcess {
 		return false;
 	}
 
-	@Transactional
-	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "删除任务")
+	/**
+	 * 删除任务（S1 软删除）：进回收站，30 天后由调度器物理清理。
+	 * 权限口径不变：全局管理员或任务创建人本人。
+	 * 关联数据（子任务/执行人/评论/清单/依赖）在回收站保留，彻底删除时才级联清理。
+	 */
+	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "删除任务（进回收站）")
 	public void deleteTask(Task task) {
 		checkDeletePermission(task.getIdUser(), "任务");
-		taskMapper.deleteByPrimaryKey(task.getIdTask());
-		TaskSubtaskExample example = new TaskSubtaskExample();
-		example.createCriteria().andIdTaskParentEqualTo(task.getIdTask());
-		taskSubtaskMapper.deleteByExample(example);
-		
-		TaskUserExample usere = new TaskUserExample();
-		usere.createCriteria().andIdTaskEqualTo(task.getIdTask());
-		taskUserMapper.deleteByExample(usere);
-		
-		TaskCommentExample commexample = new TaskCommentExample();
-		commexample.createCriteria().andIdTaskEqualTo(task.getIdTask());
-		taskCommentMapper.deleteByExample(commexample);
+		taskMapper.softDeleteById(task.getIdTask());
+	}
+
+	/**
+	 * 任务回收站列表：当前机构内所有已删除任务。
+	 */
+	public List<Task> getDeletedTasks(String idInstitution) {
+		return taskMapper.selectDeletedByInstitution(idInstitution);
+	}
+
+	/**
+	 * 从回收站恢复任务。
+	 */
+	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "恢复任务")
+	public int recoverTask(Task task) {
+		return taskMapper.recoverById(task.getIdTask());
+	}
+
+	/**
+	 * 彻底删除任务（回收站里的二次删除）：物理删除任务行并级联清理
+	 * 子任务、执行人关联、评论、检查清单、前置依赖。
+	 * 附件记录（project_task_file）也一并清理，磁盘文件不动（与项目彻底删除口径一致）。
+	 */
+	@Transactional
+	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "彻底删除任务")
+	public void deleteTaskCompletely(Task task) {
+		checkDeletePermission(task.getIdUser(), "任务");
+		String idTask = task.getIdTask();
+
+		TaskSubtaskExample subEx = new TaskSubtaskExample();
+		subEx.createCriteria().andIdTaskParentEqualTo(idTask);
+		taskSubtaskMapper.deleteByExample(subEx);
+
+		TaskUserExample userEx = new TaskUserExample();
+		userEx.createCriteria().andIdTaskEqualTo(idTask);
+		taskUserMapper.deleteByExample(userEx);
+
+		TaskCommentExample commEx = new TaskCommentExample();
+		commEx.createCriteria().andIdTaskEqualTo(idTask);
+		taskCommentMapper.deleteByExample(commEx);
+
+		taskChecklistMapper.deleteByTask(idTask);
+		taskDependencyMapper.deleteByTask(idTask);
+
+		taskMapper.purgeById(idTask);
+	}
+
+	/**
+	 * 物理清理删除时间早于 before 的回收站任务（调度器每日调用）。
+	 * 清理是后台行为，无会话上下文，不做权限校验、不记审计。
+	 * @return 清理掉的任务数
+	 */
+	@Transactional
+	public int purgeExpiredDeletedTasks(Date before) {
+		List<Task> expired = taskMapper.selectDeletedBefore(before);
+		for (Task t : expired) {
+			deleteTaskCompletelyInternal(t);
+		}
+		if (!expired.isEmpty()) {
+			log.info("回收站自动清理：物理删除 {} 个超过保留期的任务", expired.size());
+		}
+		return expired.size();
+	}
+
+	/** 后台清理专用：不走权限校验与审计的级联删除 */
+	private void deleteTaskCompletelyInternal(Task task) {
+		String idTask = task.getIdTask();
+		TaskSubtaskExample subEx = new TaskSubtaskExample();
+		subEx.createCriteria().andIdTaskParentEqualTo(idTask);
+		taskSubtaskMapper.deleteByExample(subEx);
+
+		TaskUserExample userEx = new TaskUserExample();
+		userEx.createCriteria().andIdTaskEqualTo(idTask);
+		taskUserMapper.deleteByExample(userEx);
+
+		TaskCommentExample commEx = new TaskCommentExample();
+		commEx.createCriteria().andIdTaskEqualTo(idTask);
+		taskCommentMapper.deleteByExample(commEx);
+
+		taskChecklistMapper.deleteByTask(idTask);
+		taskDependencyMapper.deleteByTask(idTask);
+
+		taskMapper.purgeById(idTask);
 	}
 
 	/**
@@ -458,5 +548,97 @@ public class TaskProcess {
 		int insert = taskCommentMapper.insert(c);
 		return insert;
 	}
-	
+
+	// ==================== S4 任务检查清单 ====================
+
+	/** 某任务的全部清单项（按排序号 + 创建时间） */
+	public List<com.sl.entity.TaskChecklistItem> getChecklist(String idTask) {
+		return taskChecklistMapper.selectByTask(idTask);
+	}
+
+	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "添加检查清单项")
+	public int addChecklistItem(com.sl.entity.TaskChecklistItem item) {
+		return taskChecklistMapper.insert(item);
+	}
+
+	/** 勾选/取消勾选清单项。不加审计：勾选太频繁，会刷屏变更记录 */
+	public int toggleChecklistItem(String idItem, boolean done) {
+		return taskChecklistMapper.updateDone(idItem,
+				done ? com.sl.entity.TaskChecklistItem.FLAG_DONE_Y : com.sl.entity.TaskChecklistItem.FLAG_DONE_N);
+	}
+
+	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "删除检查清单项")
+	public int deleteChecklistItem(String idItem) {
+		return taskChecklistMapper.deleteByPrimaryKey(idItem);
+	}
+
+	// ==================== S7 子任务 ====================
+
+	/** 某父任务下的全部子任务 */
+	public List<com.sl.entity.TaskSubtask> getSubtasks(String idTaskParent) {
+		com.sl.entity.TaskSubtaskExample ex = new com.sl.entity.TaskSubtaskExample();
+		ex.createCriteria().andIdTaskParentEqualTo(idTaskParent);
+		ex.setOrderByClause("DT_CREATE ASC");
+		return taskSubtaskMapper.selectByExample(ex);
+	}
+
+	/**
+	 * 新增子任务。必填列按 task_subtask 表约束补齐：分组沿用父任务、
+	 * 截止时间沿用父任务、状态未开始、完成率 0。
+	 */
+	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "新增子任务")
+	public int addSubtask(com.sl.entity.TaskSubtask sub) {
+		return taskSubtaskMapper.insertSelective(sub);
+	}
+
+	/**
+	 * 勾选/取消子任务完成：完成 ↔ 未开始，完成率 100/0，并汇总到父任务完成率。
+	 *
+	 * @return 更新的行数
+	 */
+	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "变更子任务完成状态")
+	public int toggleSubtaskDone(String idSubtask, boolean done) {
+		com.sl.entity.TaskSubtask sub = taskSubtaskMapper.selectByPrimaryKey(idSubtask);
+		if (null == sub) {
+			return 0;
+		}
+		com.sl.entity.TaskSubtask upd = new com.sl.entity.TaskSubtask();
+		upd.setIdSubtask(idSubtask);
+		upd.setCdStatus(done ? "已结束" : "未开始");
+		upd.setPctComplete(done ? 100d : 0d);
+		int rows = taskSubtaskMapper.updateByPrimaryKeySelective(upd);
+		if (rows > 0) {
+			rollUpParentProgress(sub.getIdTaskParent());
+		}
+		return rows;
+	}
+
+	/** 删除子任务，并重新汇总父任务完成率 */
+	@AuditLog(bizType = OperationLog.BIZ_TASK, action = "删除子任务")
+	public int deleteSubtask(String idSubtask) {
+		com.sl.entity.TaskSubtask sub = taskSubtaskMapper.selectByPrimaryKey(idSubtask);
+		int rows = taskSubtaskMapper.deleteByPrimaryKey(idSubtask);
+		if (rows > 0 && null != sub) {
+			rollUpParentProgress(sub.getIdTaskParent());
+		}
+		return rows;
+	}
+
+	/**
+	 * 子任务进度汇总到父任务（S7）：父任务完成率 = 已完成子任务数 / 子任务总数。
+	 * 没有子任务时不回写（保留用户手工设置的完成率）。
+	 */
+	private void rollUpParentProgress(String idTaskParent) {
+		List<com.sl.entity.TaskSubtask> subs = getSubtasks(idTaskParent);
+		if (null == subs || subs.isEmpty()) {
+			return;
+		}
+		long done = subs.stream().filter(s -> "已结束".equals(s.getCdStatus())).count();
+		double pct = Math.round(done * 100.0 / subs.size());
+		Task parent = new Task();
+		parent.setIdTask(idTaskParent);
+		parent.setPctComplete(pct);
+		taskMapper.updateByPrimaryKeySelective(parent);
+	}
+
 }

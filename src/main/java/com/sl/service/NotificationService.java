@@ -29,6 +29,9 @@ public class NotificationService {
 	@Autowired
 	private NotificationMapper notificationMapper;
 
+	@Autowired
+	private com.sl.notify.NotificationBroadcaster broadcaster;
+
 	/**
 	 * 推送一条通知。同一用户 + 同一业务对象 + 同一类型下已有记录（不论已读未读）就不重复推。
 	 * <p>
@@ -62,7 +65,12 @@ public class NotificationService {
 			n.setCdContent(content);
 			n.setFlagRead("N");
 			n.setDtCreate(new Date());
-			return notificationMapper.insert(n) > 0;
+			boolean inserted = notificationMapper.insert(n) > 0;
+			if (inserted) {
+				// S3 实时推送：写库成功立即广播给在线的铃铛，不在线靠轮询兜底
+				broadcaster.broadcast(idUser);
+			}
+			return inserted;
 		} catch (Exception e) {
 			// 通知失败不能阻断主流程（任务保存、评论发布都依赖它）
 			log.error("推送通知失败，user={}, type={}, biz={}", idUser, cdType, idBiz, e);

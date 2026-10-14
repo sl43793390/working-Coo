@@ -1259,6 +1259,26 @@ public class TaskExample implements Serializable {
             addCriterion("FLAG_PRIVATE not between", value1, value2, "flagPrivate");
             return (Criteria) this;
         }
+
+        public Criteria andFlagDeleteIsNull() {
+            addCriterion("FLAG_DELETE is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andFlagDeleteIsNotNull() {
+            addCriterion("FLAG_DELETE is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andFlagDeleteEqualTo(String value) {
+            addCriterion("FLAG_DELETE =", value, "flagDelete");
+            return (Criteria) this;
+        }
+
+        public Criteria andFlagDeleteNotEqualTo(String value) {
+            addCriterion("FLAG_DELETE <>", value, "flagDelete");
+            return (Criteria) this;
+        }
     }
 
     public static class Criteria extends GeneratedCriteria implements Serializable {

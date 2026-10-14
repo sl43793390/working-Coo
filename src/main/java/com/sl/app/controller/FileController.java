@@ -62,14 +62,27 @@ public class FileController {
 	 */
 	@RequestMapping("download")
 	public void download(String fileId, HttpServletRequest request, HttpServletResponse response) throws IOException {
-		// 1. 根据下载相对目录获取下载目录在服务器部署之后绝对目录/或者配置到配置文件进行读取
-//        String realPath = request.getSession().getServletContext().getRealPath("/mybatis");
-//		String currentDir = SystemUtil.getUserInfo().getCurrentDir() + "\\frontend\\file";
+		serve(fileId, response, false);
+	}
+
+	/**
+	 * 在线预览（S6）：与下载同一路径/鉴权，仅 Content-Disposition 改为 inline，
+	 * Content-Type 按扩展名给出，图片/PDF 可在浏览器内直接渲染。
+	 */
+	@RequestMapping("preview")
+	public void preview(String fileId, HttpServletRequest request, HttpServletResponse response) throws IOException {
+		serve(fileId, response, true);
+	}
+
+	/**
+	 * 文件输出公共逻辑。inline=false 下载（attachment），true 预览（inline）。
+	 */
+	private void serve(String fileId, HttpServletResponse response, boolean inline) throws IOException {
 		// 1. 登录校验：Shiro 过滤链是全放行（/** = anon），这里必须自己鉴权，
 		//    否则任何人只要拿到 fileId 就能把文件拖走。
 		User currentUser = getCurrentUser();
 		if (null == currentUser) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "请先登录后再下载文件");
+			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "请先登录后再访问文件");
 			return;
 		}
 		ProjectTaskFile projectFileByFileId = projectProcess.getProjectFileByFileId(fileId);
@@ -79,8 +92,8 @@ public class FileController {
 		}
 		// 2. 权限校验：项目成员、上传者本人，或具备查看全部用户权限的管理员
 		if (!canDownload(projectFileByFileId, currentUser)) {
-			log.warn("用户 {} 尝试越权下载文件 {}", currentUser.getUserId(), fileId);
-			sendError(response, HttpServletResponse.SC_FORBIDDEN, "无权下载该文件");
+			log.warn("用户 {} 尝试越权访问文件 {}", currentUser.getUserId(), fileId);
+			sendError(response, HttpServletResponse.SC_FORBIDDEN, "无权访问该文件");
 			return;
 		}
 		// 3. 路径净化：文件名只取最后一段，杜绝 ../../ 形式的路径穿越
@@ -103,20 +116,22 @@ public class FileController {
 			// 4. 通过文件输入流读取文件
 			is = new FileInputStream(targetFile);
 			// 5. 获取响应输出流
-			response.setContentType("application/octet-stream;charset=UTF-8");
-			// 附件下载；中文文件名按 RFC 5987 编码，避免下载后文件名乱码
+			// 预览时按扩展名给出真实类型（image/png、application/pdf...），
+			// 浏览器才能内嵌渲染；下载统一 octet-stream
+			if (inline) {
+				String contentType = guessContentType(safeName);
+				response.setContentType(contentType + ";charset=UTF-8");
+			} else {
+				response.setContentType("application/octet-stream;charset=UTF-8");
+			}
+			String disposition = inline ? "inline" : "attachment";
+			// 中文文件名按 RFC 5987 编码，避免下载/预览文件名乱码
 			String encoded = URLEncoder.encode(safeName, StandardCharsets.UTF_8).replace("+", "%20");
 			response.setHeader("content-disposition",
-					"attachment; fileName=\"" + encoded + "\"; filename*=UTF-8''" + encoded);
-//        response.setHeader("content-disposition", "inline" + ";fileName=" + URLEncoder.encode(fileName, "UTF-8"));//如果文件名有中文，需要主动进行编码处理
+					disposition + "; fileName=\"" + encoded + "\"; filename*=UTF-8''" + encoded);
 
-			// 5. 处理下载流复制
+			// 6. 处理下载流复制
 			os = response.getOutputStream();
-			// 5. 处理下载流复制 // 操作io流用IOUtils 操作file用FileUtils
-			// 通过工具类处理下载里复制和关闭流
-//        IOUtils.copy(is, os);
-//        IOUtils.closeQuietly(is);   // 优雅关闭 安静关流
-//        IOUtils.closeQuietly(os);   // 优雅关闭 安静关流
 			int len;
 			byte[] b = new byte[1024];
 			while (true) {
@@ -127,7 +142,7 @@ public class FileController {
 			}
 
 		} catch (IOException e) {
-			log.error("下载文件失败，fileId={}", fileId, e);
+			log.error("输出文件失败，fileId={}, inline={}", fileId, inline, e);
 		} finally {
 			// 释放资源
 			if (null != os) {
@@ -137,6 +152,25 @@ public class FileController {
 				is.close();
 			}
 		}
+	}
+
+	/** 按扩展名猜 Content-Type；猜不出按 octet-stream（浏览器会转成下载） */
+	private String guessContentType(String name) {
+		String guessed = java.net.URLConnection.guessContentTypeFromName(name);
+		if (null != guessed) {
+			return guessed;
+		}
+		String ext = FilenameUtils.getExtension(name).toLowerCase();
+		return switch (ext) {
+			case "png" -> "image/png";
+			case "jpg", "jpeg" -> "image/jpeg";
+			case "gif" -> "image/gif";
+			case "webp" -> "image/webp";
+			case "bmp" -> "image/bmp";
+			case "svg" -> "image/svg+xml";
+			case "pdf" -> "application/pdf";
+			default -> "application/octet-stream";
+		};
 	}
 	/**
 	 * 当前登录用户。下载请求不是 Vaadin 请求，VaadinSession 未必可用，

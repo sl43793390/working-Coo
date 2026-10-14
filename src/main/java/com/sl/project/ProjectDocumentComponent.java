@@ -108,11 +108,18 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 		}).setHeader("类型").setAutoWidth(true).setFlexGrow(0);
 		docGrid.addColumn(e -> DateUtil.formatDate(e.getDtUpload())).setHeader("上传时间");
 		docGrid.addColumn(ProjectTaskFile::getIdUser).setHeader("上传用户");
+		// S6 预览：图片内嵌显示，PDF 内嵌 viewer
+		docGrid.addComponentColumn(p -> {
+			Button previewBtn = ComFactory.getPrimaryBtn("预览");
+			previewBtn.setVisible(isPreviewable(p.getNameFile()));
+			previewBtn.addClickListener(e -> openPreview(p));
+			return previewBtn;
+		}).setHeader("预览").setAutoWidth(true).setFlexGrow(0);
 		docGrid.addComponentColumn(p -> {
 //			Button standardButton = ComFactory.getStandardButton("下载");
 //			standardButton.setIcon(new Icon(VaadinIcon.DOWNLOAD));
 //			standardButton.addClickListener(e -> HttpUtil.get(""));
-			Anchor an = new Anchor("/file/download?fileId=" + p.getIdFile(), "下载", AnchorTarget.BLANK);
+			Anchor an = new Anchor(ComFactory.buildFileUrl("/file/download?fileId=" + p.getIdFile()), "下载", AnchorTarget.BLANK);
 			return an;
 		}).setHeader("下载");
 
@@ -241,6 +248,46 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 		}
 		int idx = name.lastIndexOf('.');
 		return idx < 0 ? "" : name.substring(idx + 1).toLowerCase();
+	}
+
+	// ==================== S6 附件预览（图片 / PDF） ====================
+
+	private static final java.util.Set<String> PREVIEW_IMAGE_EXTS = java.util.Set.of(
+			"png", "jpg", "jpeg", "gif", "webp", "bmp", "svg");
+
+	private static boolean isPreviewable(String name) {
+		String ext = fileExt(name);
+		return PREVIEW_IMAGE_EXTS.contains(ext) || "pdf".equals(ext);
+	}
+
+	/** 预览弹窗：图片用 <img>，PDF 用内嵌 iframe，走 /file/preview（inline，鉴权同下载） */
+	private void openPreview(ProjectTaskFile f) {
+		com.vaadin.flow.component.dialog.Dialog dlg = new com.vaadin.flow.component.dialog.Dialog();
+		dlg.setHeaderTitle(f.getNameFile());
+		dlg.setWidth("860px");
+		dlg.setHeight("640px");
+		dlg.setCloseOnOutsideClick(true);
+		if ("pdf".equals(fileExt(f.getNameFile()))) {
+			com.vaadin.flow.component.html.IFrame frame =
+					new com.vaadin.flow.component.html.IFrame(
+							ComFactory.buildFileUrl("/file/preview?fileId=" + f.getIdFile()));
+			frame.setSizeFull();
+			dlg.add(frame);
+		} else {
+			com.vaadin.flow.component.html.Image img =
+					new com.vaadin.flow.component.html.Image(
+							ComFactory.buildFileUrl("/file/preview?fileId=" + f.getIdFile()), f.getNameFile());
+			img.setMaxWidth("100%");
+			img.setMaxHeight("100%");
+			VerticalLayout wrap = new VerticalLayout(img);
+			wrap.setAlignItems(Alignment.CENTER);
+			wrap.setSizeFull();
+			dlg.add(wrap);
+		}
+		Button close = ComFactory.getPrimaryBtn("关闭");
+		close.addClickListener(e -> dlg.close());
+		dlg.getFooter().add(close);
+		dlg.open();
 	}
 
 }

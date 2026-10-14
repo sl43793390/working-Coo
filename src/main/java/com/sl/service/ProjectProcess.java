@@ -81,6 +81,8 @@ public class ProjectProcess {
 	private com.sl.mapper.ProjectMilestoneMapper projectMilestoneMapper;
 	@Autowired
 	private com.sl.mapper.NotificationMapper notificationMapper;
+	@Autowired
+	private com.sl.mapper.TaskChecklistMapper taskChecklistMapper;
 	
 	/**
 	 * 获取当前登录用户的机构创建的所有项目
@@ -296,6 +298,14 @@ public class ProjectProcess {
 		ProjectTaskFile selectByExample = projectTaskFileMapper.selectByPrimaryKey(idFile);
 		return selectByExample;
 	}
+
+	/** 按项目 ID 取项目（S5 全局搜索跳转用） */
+	public Project getProjectById(String idProject) {
+		if (null == idProject || idProject.isBlank()) {
+			return null;
+		}
+		return projectMapper.selectByPrimaryKey(idProject);
+	}
 	
 	public List<ProjectTaskFile> getTaskFileList(String idProject,String taskId){
 		List<ProjectTaskFile> selectByExample = projectTaskFileMapper.selectByProjectAndTadkId(idProject,taskId);
@@ -476,6 +486,9 @@ public class ProjectProcess {
 		com.sl.entity.ProjectTaskFileExample pfEx = new com.sl.entity.ProjectTaskFileExample();
 		pfEx.createCriteria().andIdProjectEqualTo(idProject);
 		projectTaskFileMapper.deleteByExample(pfEx);
+
+		// 检查清单（S4）自身带 ID_PROJECT，直接按项目删
+		taskChecklistMapper.deleteByProject(idProject);
 
 		projectMilestoneMapper.deleteByProject(idProject);
 		notificationMapper.deleteByProject(idProject);

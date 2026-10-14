@@ -56,6 +56,15 @@ public class Task implements Serializable {
     private String flagPrivate;//
 
     /**
+     * 删除标记（S1 任务回收站）：'Y' 表示已进入回收站，'N'/空 为正常任务。
+     * 各查询用 FLAG_DELETE <> 'Y' 过滤，软删除后 30 天由调度器物理清理。
+     */
+    private String flagDelete;
+
+    /** 删除时间（回收站排序与 30 天清理依据），软删除时写入 */
+    private Date dtDelete;
+
+    /**
      * 执行人姓名串，逗号分隔。
      * 这不是数据库列（resultMap 里没有映射），由 TaskProcess#fillExecutorNames 批量回填，
      * 避免列表页每一行都去查一次 task_user 造成的 N+1。
@@ -222,6 +231,22 @@ public class Task implements Serializable {
 
     public void setFlagPrivate(String flagPrivate) {
         this.flagPrivate = flagPrivate == null ? null : flagPrivate.trim();
+    }
+
+    public String getFlagDelete() {
+        return flagDelete;
+    }
+
+    public void setFlagDelete(String flagDelete) {
+        this.flagDelete = flagDelete == null ? null : flagDelete.trim();
+    }
+
+    public Date getDtDelete() {
+        return dtDelete;
+    }
+
+    public void setDtDelete(Date dtDelete) {
+        this.dtDelete = dtDelete;
     }
 
 	public Set<User> getIdExeUsers() {
