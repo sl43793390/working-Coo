@@ -1,5 +1,6 @@
 package com.sl.project;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.apache.shiro.SecurityUtils;
@@ -22,13 +23,11 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.gridpro.GridPro;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.provider.CallbackDataProvider;
-import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
 import cn.hutool.core.date.DateUtil;
@@ -36,20 +35,34 @@ import com.sl.util.Util;
 
 import java.time.LocalDate;
 
+/**
+ * 全部项目（卡片墙重设计）。
+ * <p>
+ * 参考 Teambition 的项目列表：搜索栏 + 响应式卡片墙，每张卡片
+ * 自带状态徽章、完成进度条、起止时间与操作按钮，替代原来的纯表格。
+ * 数据仍走 getProjectByConditionPaged 分页接口，首屏只取一页，
+ * 「加载更多」追加下一页，不一次性拉全量。
+ */
 @SpringComponent
 @Scope("prototype")
-public class MyProject extends VerticalLayout{
+public class MyProject extends VerticalLayout {
 
 	private static final long serialVersionUID = -9006226841577552848L;
 	private static final Logger log = LoggerFactory.getLogger(MyProject.class);
+
+	/** 每次取多少张卡片 */
+	private static final int PAGE_SIZE = 24;
 
 	ProjectProcess projectProcess;
 	private TextField pname;
 	private ComboBox<String> prior;
 	private Button searchBtn;
-	private GridPro<Project> gridPro;
+	private Button createBtn;
+	private Div cardGrid;
+	private Button moreBtn;
 	private ConfirmDialog dialog;
 	private Project selectedProject;
+
 	/** 拷贝项目弹窗：先让用户改名称、时间、状态等信息，再入库 */
 	private Dialog copyDialog;
 	private TextField copyName;
@@ -59,74 +72,32 @@ public class MyProject extends VerticalLayout{
 	private ComboBox<String> copyPrior;
 	private Checkbox copyPrivate;
 	private Project copySource;
-	/** 当前筛选条件，懒加载 DataProvider 每次取数都会用到 */
+
+	/** 当前筛选条件，分页取数都会用到 */
 	private Project searchCondition = new Project();
 	/** 列表空态提示 */
 	private Span emptyHint;
-	
+	/** 已加载/总数，控制「加载更多」的显隐 */
+	private int loadedCount = 0;
+	private int totalCount = 0;
+
 	public MyProject(@Autowired ProjectProcess projectProcess) {
 		this.projectProcess = projectProcess;
 		addClassName("list-view");
-        setDefaultHorizontalComponentAlignment(Alignment.START); 
-        setMargin(false);
-        
-        HorizontalLayout tile = ComFactory.getTitle("全部项目");
-        Span horizontalLine = ComFactory.getHorizontalLine();
-        add(tile,horizontalLine);
-        //筛选栏
-       initFilterLayout();
-        
-        gridPro = ComFactory.getGridPro(Project.class, false);
-        gridPro.setHeight("600px");
-        // 懒加载：滚动到哪加载到哪，不再一次性把全部项目查出来塞进 Grid
-        gridPro.setPageSize(PAGE_SIZE);
-        emptyHint = ComFactory.getEmptyHint("暂无项目，可先创建一个项目，或联系管理员把你加入项目");
-        initGridContent(gridPro,projectProcess);
-        add(emptyHint);
-        add(gridPro);
-	}
+		setDefaultHorizontalComponentAlignment(Alignment.START);
+		setMargin(false);
 
-	/** 每页行数，同时也是懒加载每次向后端取的数量 */
-	private static final int PAGE_SIZE = 20;
+		HorizontalLayout tile = ComFactory.getTitle("全部项目");
+		Span horizontalLine = ComFactory.getHorizontalLine();
+		add(tile, horizontalLine);
 
-	private void initFilterLayout() {
-		 HorizontalLayout filterLayout = ComFactory.getResponsiveHorizontalLayoutLeft();
-		 add(filterLayout);
-		 filterLayout.add(ComFactory.getLabel("项目名称："));
-		 pname = ComFactory.getTextField();
-		 filterLayout.add(pname);
-		 filterLayout.add(ComFactory.getLabel("优先级："));
-		 prior = ComFactory.getCombobox();
-		 prior.setItems("高","中","低","全部");
-		 prior.setValue("全部");
-		 filterLayout.add(prior);
-		 
-		 searchBtn = ComFactory.getPrimaryBtn("查询");
-		 filterLayout.add(searchBtn);
-		 searchBtn.addClickListener(e ->{
-			 callConditionSearch();
-		 });
-	}
+		initFilterLayout();
 
-	private void callConditionSearch() {
-		Project p = new Project();
-		 if (pname.getValue() != null && !pname.getValue().equals("")) {
-			 p.setNameProject(pname.getValue());
-		}
-		 if (prior.getValue() != null) {
-			p.setCdPrior(prior.getValue());
-		}
-		 this.searchCondition = p;
-		 applyDataProvider();
-	}
-
-	private void initGridContent(GridPro<Project> gridPro, ProjectProcess projectProcess) {
-		// 不再在构造时一次性查出全部项目，改由 applyDataProvider 懒加载
-		dialog = ComFactory.getConfirmationDialog(conf ->{
-			// 服务端会校验「管理员或创建人」，不通过时抛 IllegalArgumentException
+		// 删除确认框：服务端会校验「管理员或创建人」，不通过时抛 IllegalArgumentException
+		dialog = ComFactory.getConfirmationDialog(conf -> {
 			try {
 				projectProcess.deleteProjectLogic(selectedProject);
-				callConditionSearch();
+				renderCards(true);
 				ComFactory.notificationSuccess("删除成功");
 			} catch (Exception ex) {
 				log.error("删除项目失败, idProject={}", selectedProject.getIdProject(), ex);
@@ -134,52 +105,208 @@ public class MyProject extends VerticalLayout{
 			} finally {
 				dialog.close();
 			}
-		}, canc ->{
-			dialog.close();
+		}, canc -> dialog.close());
+
+		cardGrid = new Div();
+		cardGrid.addClassName("proj-card-grid");
+		add(cardGrid);
+
+		moreBtn = ComFactory.getTertriayBtn("加载更多");
+		moreBtn.addClickListener(e -> renderCards(false));
+		HorizontalLayout moreBar = new HorizontalLayout(moreBtn);
+		moreBar.setWidthFull();
+		moreBar.setJustifyContentMode(JustifyContentMode.CENTER);
+		moreBar.setPadding(false);
+		add(moreBar);
+
+		emptyHint = ComFactory.getEmptyHint("暂无项目，可点击右上角「新增项目」创建，或联系管理员把你加入项目");
+		add(emptyHint);
+
+		renderCards(true);
+	}
+
+	/** 搜索栏 + 新增入口 */
+	private void initFilterLayout() {
+		HorizontalLayout filterLayout = ComFactory.getResponsiveHorizontalLayoutLeft();
+		filterLayout.setAlignItems(Alignment.CENTER);
+		add(filterLayout);
+
+		pname = ComFactory.getTextField();
+		pname.setPlaceholder("按项目名称搜索");
+		pname.setClearButtonVisible(true);
+		// 回车直接搜，不用非得点按钮
+		pname.addKeyPressListener(com.vaadin.flow.component.Key.ENTER, e -> callConditionSearch());
+		filterLayout.add(pname);
+
+		prior = ComFactory.getCombobox();
+		prior.setItems("高", "中", "低", "全部");
+		prior.setValue("全部");
+		filterLayout.add(prior);
+
+		searchBtn = ComFactory.getPrimaryBtn("查询");
+		searchBtn.addClickListener(e -> callConditionSearch());
+		filterLayout.add(searchBtn);
+
+		// 新增入口放在搜索栏另一端，创建路径一步直达
+		createBtn = ComFactory.getPrimaryBtn("新增项目");
+		createBtn.addClickListener(e -> {
+			ProjectCreateComponent createComponent = ComponentUtil.applicationContext.getBean(ProjectCreateComponent.class);
+			TabsUtil.addComponentTab("新增项目", "新增项目", createComponent);
 		});
-//		List<Project> projectList = projectProcess.getCurrentUserProjects();
-//		gridPro.setEditOnClick(true);//设置可编辑
-		gridPro.addColumn(Project::getNameProject).setHeader("项目名称").setResizable(true);
-		gridPro.addColumn(v ->{	return DateUtil.formatDate(v.getDtStart());}).setHeader("项目开始时间").setResizable(true);//格式转换
-//		gridPro.addEditColumn(Project::getCdStatus).text(Project::setCdStatus).setHeader("项目状态").setResizable(true);
-		gridPro.addColumn(Project::getCdStatus).setHeader("项目状态").setResizable(true);
-		gridPro.addColumn(Project::getCdCreateUser).setHeader("创建人").setResizable(true);
-//		gridPro.addEditColumn(Project::getCdPrior).text(Project::setCdPrior).setHeader("优先级").setResizable(true);
-		gridPro.addColumn(Project::getCdPrior).setHeader("优先级").setResizable(true);
-		gridPro.addComponentColumn(p ->{
-			HorizontalLayout ops = new HorizontalLayout();
-			ops.setSpacing(true);
-			ops.setPadding(false);
-			ops.setDefaultVerticalComponentAlignment(Alignment.CENTER);
-			// 单元格内排成一行， tertiary 紧凑按钮宽度小，不允许折行
-			ops.getStyle().set("flex-wrap", "nowrap");
-			Button updateBtn = ComFactory.getTertriayBtn("修改/查看");
-			updateBtn.addClickListener(e -> {
-				ProjectCreateComponent projectCreateComponent = ComponentUtil.applicationContext.getBean(ProjectCreateComponent.class);
-				projectCreateComponent.setProject(p);
-				projectCreateComponent.setUpdateFlag(true);
-				// key 带上项目 id：不同项目各开一个标签页，同一项目重复点击只激活不新增
-				TabsUtil.addComponentTab("修改/查看项目-" + p.getIdProject(), "修改/查看项目", projectCreateComponent);
-			});
-			Button copyBtn = ComFactory.getTertriayBtn("拷贝");
-			copyBtn.addClickListener(e -> {
-				openCopyDialog(p);
-			});
+		HorizontalLayout spacer = new HorizontalLayout(createBtn);
+		spacer.setPadding(false);
+		spacer.setSpacing(false);
+		spacer.getStyle().set("margin-left", "auto");
+		filterLayout.add(spacer);
+	}
+
+	private void callConditionSearch() {
+		Project p = new Project();
+		if (null != pname.getValue() && !pname.getValue().isBlank()) {
+			p.setNameProject(pname.getValue().trim());
+		}
+		if (null != prior.getValue() && !"全部".equals(prior.getValue())) {
+			p.setCdPrior(prior.getValue());
+		}
+		this.searchCondition = p;
+		renderCards(true);
+	}
+
+	/**
+	 * 卡片墙取数：reset=true 时从头加载第一页（搜索/删改后），否则追加下一页。
+	 */
+	private void renderCards(boolean reset) {
+		if (reset) {
+			cardGrid.removeAll();
+			loadedCount = 0;
+		}
+		boolean admin = SecurityUtils.getSubject().isPermitted(UserManagementEnums.CHECKED_ALL_USER);
+		Project cond = this.searchCondition;
+		try {
+			List<Project> page = projectProcess.getProjectByConditionPaged(cond, admin, loadedCount, PAGE_SIZE);
+			for (Project p : page) {
+				cardGrid.add(buildCard(p));
+			}
+			loadedCount += page.size();
+			totalCount = (int) projectProcess.countProjectByCondition(cond, admin);
+		} catch (Exception e) {
+			log.error("加载项目列表失败", e);
+			ComFactory.notificationError("加载项目列表失败，请刷新重试");
+		}
+		moreBtn.setVisible(loadedCount < totalCount);
+		ComFactory.toggleEmptyHint(emptyHint, totalCount);
+	}
+
+	/* ==================================================================
+	 * 项目卡片
+	 * ================================================================== */
+	private Div buildCard(Project p) {
+		Div card = new Div();
+		card.addClassName("proj-card");
+
+		// 头部：名称 + 状态徽章
+		Div head = new Div();
+		head.addClassName("proj-card-head");
+		Span name = new Span(p.getNameProject());
+		name.addClassName("proj-card-name");
+		name.setTitle(p.getNameProject());
+		head.add(name, statusBadge(p.getCdStatus()));
+		card.add(head);
+
+		// 完成进度条
+		double pct = null == p.getPctComplete() ? 0 : p.getPctComplete();
+		Div track = new Div();
+		track.addClassName("proj-progress");
+		Span fill = new Span();
+		fill.addClassName("proj-progress-fill");
+		fill.getStyle().set("width", Math.max(0, Math.min(100, pct)) + "%");
+		track.add(fill);
+		Span pctLabel = new Span((int) pct + "%");
+		pctLabel.addClassName("proj-progress-label");
+		Div progressRow = new Div(track, pctLabel);
+		progressRow.addClassName("proj-progress-row");
+		card.add(progressRow);
+
+		// 元信息：优先级 / 创建人 / 起止时间 / 私有
+		Div meta = new Div();
+		meta.addClassName("proj-card-meta");
+		Span priorLine = priorBadge(p.getCdPrior());
+		priorLine.setTitle("优先级");
+		meta.add(priorLine);
+		meta.add(metaItem("创建人", p.getCdCreateUser()));
+		String range = (null == p.getDtStart() ? "—" : DateUtil.formatDate(p.getDtStart())) + " ~ "
+				+ (null == p.getDtEnd() ? "—" : DateUtil.formatDate(p.getDtEnd()));
+		Span time = metaItem("起止", range);
+		time.setTitle(range);
+		meta.add(time);
+		if ("Y".equals(p.getFlagPrivate())) {
+			Span priv = new Span("私有");
+			priv.setClassName("prj-badge prj-badge-purple");
+			meta.add(priv);
+		}
+		card.add(meta);
+
+		// 操作区：权限口径与服务端一致（管理员或创建人可删除）
+		Div foot = new Div();
+		foot.addClassName("proj-card-foot");
+		Button updateBtn = ComFactory.getTertriayBtn("查看/修改");
+		updateBtn.addClickListener(e -> {
+			ProjectCreateComponent projectCreateComponent = ComponentUtil.applicationContext.getBean(ProjectCreateComponent.class);
+			projectCreateComponent.setProject(p);
+			projectCreateComponent.setUpdateFlag(true);
+			// key 带上项目 id：不同项目各开一个标签页，同一项目重复点击只激活不新增
+			TabsUtil.addComponentTab("修改/查看项目-" + p.getIdProject(), "修改/查看项目", projectCreateComponent);
+		});
+		Button copyBtn = ComFactory.getTertriayBtn("拷贝");
+		copyBtn.addClickListener(e -> openCopyDialog(p));
+		foot.add(updateBtn, copyBtn);
+		if (canDelete(p)) {
 			Button deleteBtn = ComFactory.getTertriayBtn("删除");
+			deleteBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
 			deleteBtn.addClickListener(e -> {
 				this.selectedProject = p;
 				dialog.open();
 			});
-			deleteBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
-			// 与服务端口径一致：管理员或项目创建人本人才显示删除按钮
-			if (canDelete(p)) {
-				ops.add(updateBtn, copyBtn, deleteBtn);
-			} else {
-				ops.add(updateBtn, copyBtn);
-			}
-			return ops;
-		}).setHeader("操作").setResizable(true).setAutoWidth(true).setFlexGrow(0);
-		applyDataProvider();
+			foot.add(deleteBtn);
+		}
+		card.add(foot);
+		return card;
+	}
+
+	private Span metaItem(String label, String value) {
+		Span s = new Span(label + "：" + (null == value || value.isBlank() ? "—" : value));
+		s.addClassName("proj-meta-item");
+		return s;
+	}
+
+	/** 项目状态徽章：进行中蓝 / 已完成绿 / 暂停橙 / 未开始灰 */
+	private static Span statusBadge(String status) {
+		String key = null == status || status.isBlank() ? "未开始" : status;
+		String color = switch (key) {
+			case "进行中" -> "prj-badge-blue";
+			case "已完成", "已结束" -> "prj-badge-green";
+			case "暂停" -> "prj-badge-orange";
+			default -> "prj-badge-gray";
+		};
+		Span s = new Span(key);
+		s.setClassName("prj-badge " + color);
+		return s;
+	}
+
+	/** 优先级：色点 + 文案（与任务统计页同一套配色） */
+	private static Span priorBadge(String prior) {
+		String key = null == prior || prior.isBlank() ? "低" : prior;
+		String color = switch (key) {
+			case "高" -> "prj-prior-high";
+			case "中" -> "prj-prior-mid";
+			default -> "prj-prior-low";
+		};
+		Span dot = new Span();
+		dot.setClassName("prj-prior-dot " + color);
+		Span text = new Span(key);
+		Span wrap = new Span(dot, text);
+		wrap.setClassName("prj-prior");
+		return wrap;
 	}
 
 	/**
@@ -221,13 +348,13 @@ public class MyProject extends VerticalLayout{
 	private void initCopyDialog() {
 		VerticalLayout form = ComFactory.getVerticalLayout();
 		form.setWidth("100%");
-		copyName = ComFactory.getStandardTextField("项目名称：","410px");
+		copyName = ComFactory.getStandardTextField("项目名称：", "410px");
 		ComFactory.bindRequired(copyName, "请填写项目名称");
-		copyStart = ComFactory.getDateField("开始时间", LocalDate.now(),"410px");
-		copyEnd = ComFactory.getDateField("结束时间", LocalDate.now().plusMonths(1),"410px");
-		copyStatus = ComFactory.getStandardComboBox("状态：","410px");
+		copyStart = ComFactory.getDateField("开始时间", LocalDate.now(), "410px");
+		copyEnd = ComFactory.getDateField("结束时间", LocalDate.now().plusMonths(1), "410px");
+		copyStatus = ComFactory.getStandardComboBox("状态：", "410px");
 		copyStatus.setItems("未开始", "进行中", "暂停", "已完成");
-		copyPrior = ComFactory.getStandardComboBox("优先级：","410px");
+		copyPrior = ComFactory.getStandardComboBox("优先级：", "410px");
 		copyPrior.setItems("高", "中", "低");
 		copyPrivate = ComFactory.getCheckbox("是否私有");
 		form.add(copyName, copyStart, copyEnd, copyStatus, copyPrior, copyPrivate);
@@ -254,27 +381,13 @@ public class MyProject extends VerticalLayout{
 			custom.setFlagPrivate(copyPrivate.getValue() ? "Y" : "N");
 			if (projectProcess.cloneProject(copySource, custom)) {
 				copyDialog.close();
-				applyDataProvider();
+				renderCards(true);
 				ComFactory.notification("拷贝成功");
 			} else {
 				ComFactory.notificationError("拷贝失败，请重试");
 			}
 		});
 		cancelBtn.addClickListener(e -> copyDialog.close());
-	}
-
-	/**
-	 * 用懒加载 DataProvider 装载数据：首屏只查一页，往下滚动再取下一页。
-	 * 原先是 getProjectByCondition 全量查出来再 setItems，项目多了首屏会明显变慢。
-	 */
-	private void applyDataProvider() {
-		boolean admin = SecurityUtils.getSubject().isPermitted(UserManagementEnums.CHECKED_ALL_USER);
-		Project cond = this.searchCondition;
-		CallbackDataProvider<Project, Void> dataProvider = DataProvider.fromCallbacks(
-				query -> projectProcess.getProjectByConditionPaged(cond, admin, query.getOffset(), query.getLimit()).stream(),
-				query -> (int) projectProcess.countProjectByCondition(cond, admin));
-		gridPro.setItems(dataProvider);
-		ComFactory.toggleEmptyHint(emptyHint, projectProcess.countProjectByCondition(cond, admin));
 	}
 
 	public ProjectProcess getProjectProcess() {

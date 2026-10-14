@@ -60,21 +60,34 @@ public class TaskExcelComponent extends VerticalLayout {
 		add(ComFactory.getTitle("任务导入导出"));
 		add(ComFactory.getHorizontalLine());
 
+		// ===== 导出卡片 =====
+		VerticalLayout exportCard = new VerticalLayout();
+		exportCard.setPadding(false);
+		exportCard.setSpacing(false);
+		exportCard.setWidthFull();
+		exportCard.addClassName("form-section");
+		Span exportTitle = new Span("导出");
+		exportTitle.addClassName("form-section-title");
 		HorizontalLayout exportBar = ComFactory.getResponsiveHorizontalLayoutLeft();
 		exportBar.setAlignItems(Alignment.CENTER);
-		add(exportBar);
 		Button exportBtn = ComFactory.getPrimaryBtn("导出当前项目任务", VaadinIcon.DOWNLOAD);
 		exportBtn.addClickListener(e -> export());
 		exportBar.add(exportBtn);
 		Span exportTip = new Span("导出的文件可直接作为导入模板：改完再传回来即可批量建任务。");
-		exportTip.addClassName("search-tip");
-		add(exportTip);
+		exportTip.addClassName("form-hint");
+		exportCard.add(exportTitle, exportBar, exportTip);
+		add(exportCard);
 
-		add(ComFactory.getHorizontalLine("100%"));
-
+		// ===== 导入卡片 =====
+		VerticalLayout importCard = new VerticalLayout();
+		importCard.setPadding(false);
+		importCard.setSpacing(false);
+		importCard.setWidthFull();
+		importCard.addClassName("form-section");
+		Span importTitle = new Span("导入");
+		importTitle.addClassName("form-section-title");
 		HorizontalLayout importBar = ComFactory.getResponsiveHorizontalLayoutLeft();
 		importBar.setAlignItems(Alignment.CENTER);
-		add(importBar);
 		// 新 API（24.8+）：内存接收，回调里直接解析 Excel；成功/失败都由回调路径决定
 		UI ui = UI.getCurrent();
 		Upload upload = new Upload(UploadHandler.inMemory((metadata, bytes) -> {
@@ -86,6 +99,8 @@ public class TaskExcelComponent extends VerticalLayout {
 		upload.setAutoUpload(true);
 		upload.addFileRejectedListener(e -> ComFactory.notificationError("只支持 .xlsx / .xls 文件"));
 		importBar.add(ComFactory.getLabel("选择文件："), upload);
+		importCard.add(importTitle, importBar);
+		add(importCard);
 
 		resultArea = new VerticalLayout();
 		resultArea.setPadding(false);

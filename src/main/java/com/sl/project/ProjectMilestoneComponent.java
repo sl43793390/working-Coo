@@ -78,15 +78,17 @@ public class ProjectMilestoneComponent extends VerticalLayout implements Refresh
 		}).setHeader("状态");
 		grid.addColumn(m -> QuillEditor.htmlToPlainText(m.getCdDescription())).setHeader("说明");
 		grid.addComponentColumn(m -> {
-			Button b = ComFactory.getTertriayBtn("编辑", VaadinIcon.EDIT);
-			b.addClickListener(e -> openEditDialog(m));
-			return b;
-		}).setHeader("编辑");
-		grid.addComponentColumn(m -> {
-			Button b = ComFactory.getTertriayBtn("删除", VaadinIcon.TRASH);
-			b.addClickListener(e -> confirmDelete(m));
-			return b;
-		}).setHeader("删除");
+			HorizontalLayout ops = new HorizontalLayout();
+			ops.setSpacing(false);
+			ops.setPadding(false);
+			ops.getStyle().set("flex-wrap", "nowrap");
+			Button edit = ComFactory.getTertriayBtn("编辑", VaadinIcon.EDIT);
+			edit.addClickListener(e -> openEditDialog(m));
+			Button del = ComFactory.getTertriayBtn("删除", VaadinIcon.TRASH);
+			del.addClickListener(e -> confirmDelete(m));
+			ops.add(edit, del);
+			return ops;
+		}).setHeader("操作").setAutoWidth(true).setFlexGrow(0);
 		add(grid);
 
 		emptyHint = ComFactory.getEmptyHint("当前项目还没有里程碑，点「新增里程碑」添加第一个");

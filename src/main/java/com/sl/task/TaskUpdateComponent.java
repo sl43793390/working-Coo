@@ -36,6 +36,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -101,60 +102,73 @@ public class TaskUpdateComponent extends VerticalLayout{
 			add(ComFactory.getTitle("修改任务"));
 		}
 		add(ComFactory.getHorizontalLine());
-		contentLayout = ComFactory.getResponsiveHorizontalLayoutLeft();
-		add(contentLayout);
 		initLayoutDetail();
 		initContent();
 		registerHandler();
 	}
 
+	/**
+	 * 分组卡片布局（与「新增项目」同一套视觉）：
+	 * 基本信息 → 计划与执行 → 任务描述与附件 → 底部保存栏。
+	 * 原来是 30% 宽单列表单 + 1000px 固定宽描述区，窄屏挤压、宽屏空旷。
+	 */
 	private void initLayoutDetail() {
+		// ===== 基本信息 =====
+		VerticalLayout basic = sectionCard("基本信息");
 		FormLayout form = new FormLayout();
-		form.setWidth("30%");
-		form.setResponsiveSteps( new ResponsiveStep("0", 1));
-		contentLayout.add(form);
+		form.setResponsiveSteps(new ResponsiveStep("0", 1), new ResponsiveStep("640px", 2));
 		taskName = ComFactory.getStandardTextField("任务名称：");
 		ComFactory.bindRequired(taskName, "请填写任务名称");
-		taskGroup = ComFactory.getStandardComboBox("任务分组：");//增加
-		typeBox = ComFactory.getStandardComboBox("任务类型：");//增加
-		tagBox = ComFactory.getStandardComboBox("任务标签：");//增加
+		typeBox = ComFactory.getStandardComboBox("任务类型：");
+		taskGroup = ComFactory.getStandardComboBox("任务分组：");
+		tagBox = ComFactory.getStandardComboBox("任务标签：");
 		statusBox = ComFactory.getStandardComboBox("任务状态：");
 		statusBox.setItems(Constants.STATUS_LIST);
 		statusBox.setValue("未开始");
 		prior = ComFactory.getStandardComboBox("优先级：");
 		prior.setItems("高","中","低");
 		prior.setValue("低");
-		
-//		starBox = ComFactory.getStandardComboBox("任务星标：");//增加
-//		starBox.setItems("1","2","3","4","5");
-		pctComplete = ComFactory.getStandardTextField("完成比例：");
+		pctComplete = ComFactory.getStandardTextField("完成比例（%）：");
 		pctComplete.setPlaceholder("请输入0 ~ 100之间的数");
 		pctComplete.setValue("0");
 		ComFactory.bindNumberRange(pctComplete, 0, 100, "完成比例只能输入 0 到 100 之间的数字");
-		
+		privateBox = ComFactory.getCheckbox("私有任务（仅自己可见，非私有则项目组可见）");
+		privateBox.setTooltipText("私有仅自己可见，非私有则项目组都可见");
+		form.add(taskName, statusBox, typeBox, taskGroup, tagBox, prior, pctComplete, privateBox);
+		// 分组/类型/标签不够用时就地新建，不用跳去别的页面
+		HorizontalLayout dimBar = new HorizontalLayout();
+		dimBar.setPadding(false);
+		dimBar.setSpacing(true);
+		groupBtn = ComFactory.getTertriayBtn("新建分组", VaadinIcon.PLUS);
+		typeBtn = ComFactory.getTertriayBtn("新建类型", VaadinIcon.PLUS);
+		tagBtn = ComFactory.getTertriayBtn("新建标签", VaadinIcon.PLUS);
+		dimBar.add(groupBtn, typeBtn, tagBtn);
+		basic.add(form, dimBar);
+		add(basic);
+
+		// ===== 计划与执行 =====
+		VerticalLayout schedule = sectionCard("计划与执行");
+		FormLayout form2 = new FormLayout();
+		form2.setResponsiveSteps(new ResponsiveStep("0", 1), new ResponsiveStep("640px", 2));
 		dateStart = ComFactory.getDatePicker("计划开始日期：");
 		dateEnd = ComFactory.getDatePicker("结束日期：");
 		ComFactory.bindRequired(dateEnd, dateEnd, "请选择任务结束日期");
-
 		// 工时：燃尽图的基准线与实际线。空值合法（老任务没填），填了就必须是非负数
 		estimateHours = ComFactory.getStandardTextField("预计工时：");
 		estimateHours.setPlaceholder("单位：小时，可不填");
 		ComFactory.bindNumberRange(estimateHours, 0, 100000, "预计工时必须是不小于 0 的数字");
-
 		actualHours = ComFactory.getStandardTextField("实际工时：");
 		actualHours.setPlaceholder("单位：小时，可不填");
 		ComFactory.bindNumberRange(actualHours, 0, 100000, "实际工时必须是不小于 0 的数字");
-		//****************************第二部分********************************
-//		FormLayout form2 = new FormLayout();
-//		form2.setWidth("30%");
-//		form2.setResponsiveSteps( new ResponsiveStep("0", 1));
-//		contentLayout.add(form2);
-		userBox = ComFactory.getComboboxMultiSelect("执行人：",User.class);
-		userBox.setItemLabelGenerator(u -> u.getUserName());
-		form.add(taskName,taskGroup,typeBox,tagBox,statusBox,prior,pctComplete,
-				dateStart,dateEnd,estimateHours,actualHours,userBox);
-//		form2.add(prior,pctComplete,dateEnd,userBox);
-		Upload upload = null;
+		userBox = ComFactory.getComboboxMultiSelect("执行人：", User.class);
+		userBox.setItemLabelGenerator(User::getUserName);
+		form2.add(dateStart, dateEnd, estimateHours, actualHours, userBox);
+		schedule.add(form2);
+		add(schedule);
+
+		// ===== 任务描述与附件 =====
+		VerticalLayout desc = sectionCard("任务描述与附件");
+		Upload upload;
 		if (null != task) {//update
 			parentPath = ComponentUtil.getCurrentUserFilePath()+File.separator+task.getIdTask();
 			upload = ComFactory.getUpload(parentPath, f -> uploadFile(task.getIdTask(), f));
@@ -162,24 +176,31 @@ public class TaskUpdateComponent extends VerticalLayout{
 			parentPath = ComponentUtil.getCurrentUserFilePath()+File.separator+idTaskNew;
 			upload = ComFactory.getUpload(parentPath, f -> uploadFile(idTaskNew, f));
 		}
-		//第三部分
-		VerticalLayout layoutLeft = ComFactory.getVerticalLayout();
-		layoutLeft.setWidth("1000px");
-		contentLayout.add(layoutLeft);
-		remark = new QuillEditor().withToolbar("full").withHeight("440px");//通用 Quill 富文本编辑器
-		remark.setWidth("97%");
-		Span label = ComFactory.getLabel("任务描述:");
-		
-		HorizontalLayout horizontalLayoutLeft = ComFactory.getResponsiveHorizontalLayoutLeft();
-		groupBtn = ComFactory.getPrimaryBtn("新建分组");
-		typeBtn = ComFactory.getPrimaryBtn("新建类型");
-		tagBtn = ComFactory.getPrimaryBtn("新建标签");
-		privateBox = ComFactory.getCheckbox("是否私有：");
-		privateBox.setTooltipText("私有仅自己可见，非私有则项目组都可见");
-		horizontalLayoutLeft.add(groupBtn,typeBtn,tagBtn,privateBox,upload);
+		upload.setWidthFull();
+		remark = new QuillEditor().withToolbar("full").withHeight("360px");//通用 Quill 富文本编辑器
+		remark.setWidthFull();
+		desc.add(remark, upload);
+		add(desc);
+
+		// ===== 底部保存栏 =====
 		saveBtn = ComFactory.getPrimaryBtn("保存");
-		layoutLeft.add(label,remark,horizontalLayoutLeft,saveBtn);
-		
+		HorizontalLayout actionBar = new HorizontalLayout(saveBtn);
+		actionBar.setWidthFull();
+		actionBar.setJustifyContentMode(JustifyContentMode.END);
+		actionBar.setPadding(false);
+		add(actionBar);
+	}
+
+	/** 分组卡片外壳（与 ProjectCreateComponent 同款） */
+	private VerticalLayout sectionCard(String title) {
+		Span t = new Span(title);
+		t.addClassName("form-section-title");
+		VerticalLayout section = new VerticalLayout(t);
+		section.setPadding(false);
+		section.setSpacing(false);
+		section.setWidthFull();
+		section.addClassName("form-section");
+		return section;
 	}
 
 	/**

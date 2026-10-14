@@ -99,6 +99,13 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 		docGrid.setWidth("98%");
 		docGrid.setSelectionMode(SelectionMode.SINGLE);
 		docGrid.addColumn(ProjectTaskFile::getNameFile).setHeader("文件名称");
+		// 类型徽章：取扩展名，一眼分辨文档/图片/压缩包
+		docGrid.addComponentColumn(p -> {
+			String ext = fileExt(p.getNameFile());
+			Span badge = new Span(ext.isEmpty() ? "文件" : ext.toUpperCase());
+			badge.setClassName("doc-type-badge");
+			return badge;
+		}).setHeader("类型").setAutoWidth(true).setFlexGrow(0);
 		docGrid.addColumn(e -> DateUtil.formatDate(e.getDtUpload())).setHeader("上传时间");
 		docGrid.addColumn(ProjectTaskFile::getIdUser).setHeader("上传用户");
 		docGrid.addComponentColumn(p -> {
@@ -225,6 +232,15 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 	@Override
 	public void onComponentEvent(FailedEvent event) {
 		Notification.show("上传文件失败", 5000, Notification.Position.MIDDLE);
+	}
+
+	/** 取文件扩展名（不含点、小写），无扩展名返回空串 */
+	private static String fileExt(String name) {
+		if (null == name) {
+			return "";
+		}
+		int idx = name.lastIndexOf('.');
+		return idx < 0 ? "" : name.substring(idx + 1).toLowerCase();
 	}
 
 }

@@ -28,7 +28,10 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -108,13 +111,20 @@ public class MyTaskComponent extends VerticalLayout implements Refreshable {
 
 	private void initFilterLayout() {
 		HorizontalLayout layoutLeft = ComFactory.getResponsiveHorizontalLayoutLeft();
+		layoutLeft.setAlignItems(Alignment.CENTER);
 		add(layoutLeft);
 		nameField = ComFactory.getTextField();
+		nameField.setPlaceholder("按任务名称搜索");
+		nameField.setClearButtonVisible(true);
 		typeBox = ComFactory.getCombobox();
+		typeBox.setPlaceholder("任务类型");
 		tagBox = ComFactory.getCombobox();
+		tagBox.setPlaceholder("任务标签");
 		groupBox = ComFactory.getCombobox();
-		
+		groupBox.setPlaceholder("任务分组");
+
 		HorizontalLayout secondLayout = ComFactory.getResponsiveHorizontalLayoutLeft();
+		secondLayout.setAlignItems(Alignment.CENTER);
 		add(secondLayout);
 		statusBox = ComFactory.getCombobox();
 		statusBox.setItems(Constants.STATUS_LIST);
@@ -123,27 +133,27 @@ public class MyTaskComponent extends VerticalLayout implements Refreshable {
 		statusBox.setClearButtonVisible(true);
 		typeCreateBox = ComFactory.getCombobox();
 		typeCreateBox.setItems("我创建的任务");
-		
-		layoutLeft.add(ComFactory.getLabel("任务名称："));
-		layoutLeft.add(nameField);
-		layoutLeft.add(ComFactory.getLabel("任务类型："));
-		layoutLeft.add(typeBox);
-		layoutLeft.add(ComFactory.getLabel("任务标签："));
-		layoutLeft.add(tagBox);
-		layoutLeft.add(ComFactory.getLabel("任务分组："));
-		layoutLeft.add(groupBox);
-		secondLayout.add(ComFactory.getLabel("任务状态："));
-		secondLayout.add(statusBox);
-		secondLayout.add(ComFactory.getLabel("任务类型："));
-		secondLayout.add(typeCreateBox);
-		
+		typeCreateBox.setPlaceholder("创建范围");
+
+		layoutLeft.add(nameField, typeBox, tagBox, groupBox);
+		secondLayout.add(statusBox, typeCreateBox);
+
 		searchBtn = ComFactory.getPrimaryBtn("搜索");
 		secondLayout.add(searchBtn);
 		userBox = ComFactory.getCombobox(ProjectUser.class);
-//		 if (SecurityUtils.getSubject().isPermitted(UserManagementEnums.CHECKED_ALL_USER)) {
-			secondLayout.add(ComFactory.getLabel("执行人："));
-			secondLayout.add(userBox);
-//		}
+		userBox.setPlaceholder("按执行人筛选");
+		secondLayout.add(userBox);
+		// 新增入口放筛选区另一端，创建路径一步直达
+		Button createBtn = ComFactory.getPrimaryBtn("新增任务");
+		createBtn.addClickListener(e -> {
+			TaskUpdateComponent c = ComponentUtil.applicationContext.getBean(TaskUpdateComponent.class);
+			TabsUtil.addComponentTab("新增任务", "新增任务", c);
+		});
+		HorizontalLayout spacer = new HorizontalLayout(createBtn);
+		spacer.setPadding(false);
+		spacer.setSpacing(false);
+		spacer.getStyle().set("margin-left", "auto");
+		secondLayout.add(spacer);
 	}
 
 	private void initGridLayout() {
@@ -189,10 +199,16 @@ public class MyTaskComponent extends VerticalLayout implements Refreshable {
 		}, canc -> deleteDialog.close());
 		grid.setSelectionMode(SelectionMode.SINGLE);
 		grid.addColumn(Task::getNameTask).setHeader("任务名称").setResizable(true);
-		grid.addColumn(Task::getCdTaskType).setHeader("任务类型").setResizable(true);
-		grid.addColumn(Task::getCdTaskGroup).setHeader("任务分组").setResizable(true);
-		grid.addColumn(Task::getCdTag).setHeader("任务标签").setResizable(true);
-		grid.addColumn(Task::getCdStatus).setHeader("任务状态").setResizable(true);
+		grid.addColumn(Task::getCdTaskType).setHeader("类型").setResizable(true);
+		grid.addColumn(Task::getCdTaskGroup).setHeader("分组").setResizable(true);
+		grid.addColumn(Task::getCdTag).setHeader("标签").setResizable(true);
+		// 状态/优先级/可见性徽章化，完成比例内嵌迷你进度条——扫一眼就知道每行任务的状态
+		grid.addComponentColumn(t -> statusBadge(t.getCdStatus())).setHeader("状态")
+				.setAutoWidth(true).setFlexGrow(0).setResizable(true);
+		grid.addComponentColumn(t -> priorBadge(t.getCdPrior())).setHeader("优先级")
+				.setAutoWidth(true).setFlexGrow(0).setResizable(true);
+		grid.addComponentColumn(t -> progressCell(t.getPctComplete())).setHeader("完成")
+				.setWidth("120px").setFlexGrow(0).setResizable(true);
 		// 执行人以 task_user 为准（支持多人），ID_EXE_USER 只作为没有关联记录时的兜底
 		grid.addColumn(t -> {
 			String names = t.getNameExeUsers();
@@ -205,35 +221,36 @@ public class MyTaskComponent extends VerticalLayout implements Refreshable {
 			.setFlexGrow(1)
 			.setTooltipGenerator(MyTaskComponent::dateRange).setResizable(true);
 		// 是否公开只有「是/否」两个字，固定窄列，把空间让给排期列
-		grid.addColumn(Task::getFlagPrivate).setHeader("是否公开").setWidth("90px").setFlexGrow(0).setResizable(true);
+		grid.addComponentColumn(t -> privateBadge(t.getFlagPrivate())).setHeader("可见性")
+				.setWidth("90px").setFlexGrow(0).setResizable(true);
 		grid.addColumn(Task::getIdUser).setHeader("创建人").setResizable(true);
 		grid.addComponentColumn(com ->{
 			HorizontalLayout ops = new HorizontalLayout();
-			ops.setSpacing(true);
+			ops.setSpacing(false);
 			ops.setPadding(false);
-			// tertiary 紧凑按钮排成一行，不折行
+			// 图标化紧凑操作钮：五个文字按钮太占宽，图标 + 悬停提示更清爽
 			ops.getStyle().set("flex-wrap", "nowrap");
-			Button detailBtn = ComFactory.getTertriayBtn("详情");
+			Button detailBtn = iconBtn(VaadinIcon.EYE, "详情");
 			detailBtn.addClickListener(e -> {
 				TaskDetailComponent c = ComponentUtil.applicationContext.getBean(TaskDetailComponent.class);
 				c.setTask(com);//TODO 并填充内容
 				c.initContent();
 				TabsUtil.addComponentTab("任务详情-" + com.getIdTask(), "任务详情", c);
 			});
-			Button receiveBtn = ComFactory.getTertriayBtn("领取");
+			Button receiveBtn = iconBtn(VaadinIcon.HAND, "领取");
 			receiveBtn.addClickListener(e -> {
 				this.selectedTask = com;
 				dialog.setText("确认领取任务「" + com.getNameTask() + "」？领取后任务将出现在你的执行列表。");
 				dialog.open();
 			});
-			Button editBtn = ComFactory.getTertriayBtn("修改");
+			Button editBtn = iconBtn(VaadinIcon.EDIT, "修改");
 			editBtn.addClickListener(e -> {
 				TaskUpdateComponent c = ComponentUtil.applicationContext.getBean(TaskUpdateComponent.class);
 				c.setTask(com);//TODO 并填充内容
 				c.recoverField();
 				TabsUtil.addComponentTab("修改任务-" + com.getIdTask(), "修改任务", c);
 			});
-			Button commentBtn = ComFactory.getTertriayBtn("留言");
+			Button commentBtn = iconBtn(VaadinIcon.COMMENT, "留言");
 			commentBtn.addClickListener(e -> {
 				TaskCommentComponent c = ComponentUtil.applicationContext.getBean(TaskCommentComponent.class);
 				c.setTaskId(com.getIdTask());//TODO 并填充内容
@@ -244,8 +261,7 @@ public class MyTaskComponent extends VerticalLayout implements Refreshable {
 			ops.add(detailBtn, receiveBtn, editBtn, commentBtn);
 		// 删除：仅管理员或任务创建人可见（deleteTask 带审计日志，级联删子任务/执行人/留言）
 		if (canDelete(com)) {
-			Button deleteBtn = ComFactory.getTertriayBtn("删除");
-			// LUMO_ERROR：tertiary + error = 红字，和其它蓝色操作按钮区分开
+			Button deleteBtn = iconBtn(VaadinIcon.TRASH, "删除");
 			deleteBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
 			deleteBtn.addClickListener(e -> {
 					this.selectedTask = com;
@@ -256,6 +272,67 @@ public class MyTaskComponent extends VerticalLayout implements Refreshable {
 			}
 			return ops;
 		}).setHeader("操作").setAutoWidth(true).setFlexGrow(0);
+	}
+
+	/** 图标化操作钮：tertiary 图标按钮 + 悬停提示 */
+	private static Button iconBtn(VaadinIcon icon, String tooltip) {
+		Button b = new Button(new Icon(icon));
+		b.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+		b.setTooltipText(tooltip);
+		return b;
+	}
+
+	/** 任务状态徽章：进行中蓝 / 已结束绿 / 已中断橙 / 其余灰 */
+	private static Span statusBadge(String status) {
+		String key = null == status || status.isBlank() ? "未开始" : status;
+		String color = switch (key) {
+			case "进行中" -> "prj-badge-blue";
+			case "已结束" -> "prj-badge-green";
+			case "已中断" -> "prj-badge-orange";
+			default -> "prj-badge-gray";
+		};
+		Span s = new Span(key);
+		s.setClassName("prj-badge " + color);
+		return s;
+	}
+
+	/** 优先级色点 + 文案（与项目卡片同一套配色） */
+	private static Span priorBadge(String prior) {
+		String key = null == prior || prior.isBlank() ? "低" : prior;
+		String color = switch (key) {
+			case "高" -> "prj-prior-high";
+			case "中" -> "prj-prior-mid";
+			default -> "prj-prior-low";
+		};
+		Span dot = new Span();
+		dot.setClassName("prj-prior-dot " + color);
+		Span wrap = new Span(dot, new Span(key));
+		wrap.setClassName("prj-prior");
+		return wrap;
+	}
+
+	/** 完成比例：迷你进度条 + 百分比（复用 proj-progress 样式） */
+	private static Div progressCell(Double pct) {
+		double v = null == pct ? 0 : pct;
+		Div track = new Div();
+		track.addClassName("proj-progress");
+		Span fill = new Span();
+		fill.addClassName("proj-progress-fill");
+		fill.getStyle().set("width", Math.max(0, Math.min(100, v)) + "%");
+		track.add(fill);
+		Span label = new Span((int) v + "%");
+		label.addClassName("proj-progress-label");
+		Div row = new Div(track, label);
+		row.addClassName("proj-progress-row");
+		return row;
+	}
+
+	/** 可见性徽章：Y=公开（项目组可见），N=私有（仅自己可见） */
+	private static Span privateBadge(String flagPrivate) {
+		boolean isPublic = !"N".equals(flagPrivate);
+		Span s = new Span(isPublic ? "公开" : "私有");
+		s.setClassName("prj-badge " + (isPublic ? "prj-badge-blue" : "prj-badge-purple"));
+		return s;
 	}
 
 	/**

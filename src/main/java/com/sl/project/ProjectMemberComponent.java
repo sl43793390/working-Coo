@@ -65,8 +65,18 @@ public class ProjectMemberComponent extends VerticalLayout implements Refreshabl
 
 		grid = ComFactory.getGrid(MemberVO.class);
 		grid.setHeight("460px");
+		// 头像 + 姓名同列：视觉上先认人再看数据
+		grid.addComponentColumn(m -> {
+			com.vaadin.flow.component.avatar.Avatar avatar = new com.vaadin.flow.component.avatar.Avatar(m.getNameUser());
+			avatar.addClassName("member-avatar");
+			HorizontalLayout cell = new HorizontalLayout(avatar, new Span(m.getNameUser()));
+			cell.setSpacing(true);
+			cell.setPadding(false);
+			cell.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+			cell.getStyle().set("flex-wrap", "nowrap");
+			return cell;
+		}).setHeader("姓名");
 		grid.addColumn(MemberVO::getIdUser).setHeader("用户ID");
-		grid.addColumn(MemberVO::getNameUser).setHeader("姓名");
 		grid.addComponentColumn(m -> {
 			Span badge = ProjectUser.ROLE_OWNER.equals(m.getCdProjectRole())
 					? ComFactory.getConfirmBadge(m.getRoleName())
@@ -149,8 +159,12 @@ public class ProjectMemberComponent extends VerticalLayout implements Refreshabl
 		String myRole = projectRoleService.getCurrentRole();
 		boolean admin = projectRoleService.isGlobalAdmin();
 		boolean canManage = admin || ProjectUser.ROLE_OWNER.equals(myRole);
-		roleTip.setText("你在当前项目的角色："
-				+ (null == myRole ? "非项目成员" : roleLabel(myRole))
+		// 成员构成摘要：负责人/成员/访客各多少，一眼看清项目角色结构
+		long owners = members.stream().filter(m -> ProjectUser.ROLE_OWNER.equals(m.getCdProjectRole())).count();
+		long viewers = members.stream().filter(m -> ProjectUser.ROLE_VIEWER.equals(m.getCdProjectRole())).count();
+		roleTip.setText("共 " + members.size() + " 名成员（负责人 " + owners + " · 成员 "
+				+ (members.size() - owners - viewers) + " · 访客 " + viewers + "）　|　"
+				+ "你的角色：" + (null == myRole ? "非项目成员" : roleLabel(myRole))
 				+ (admin ? "（全局管理员，拥有全部权限）" : ""));
 		// 非负责人只读：不允许加人、改角色、移除
 		addUserBox.setEnabled(canManage);
