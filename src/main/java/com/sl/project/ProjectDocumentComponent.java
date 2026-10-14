@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.shiro.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +18,9 @@ import com.sl.app.component.util.Refreshable;
 import com.sl.entity.Project;
 import com.sl.entity.ProjectTaskFile;
 import com.sl.service.ProjectProcess;
-import com.sl.user.UserManagementEnums;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.html.Anchor;
@@ -35,7 +33,6 @@ import com.vaadin.flow.component.richtexteditor.RichTextEditor;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.FailedEvent;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
 import cn.hutool.core.date.DateUtil;
@@ -67,8 +64,6 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 	private Span emptyHint;
 	private RichTextEditor richTextEditor;
 
-	private ComboBox<Project> projectCom;
-
 	private Button searchBtn;
 
 	private TextField fileName;
@@ -80,22 +75,22 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 		initFilterLayout();// 筛选区
 		initFileListTable();// 文档列表展示
 		initFileUploadLayout();// 上传区
-		initContent();
 		registerHandler();
 	}
 
+	/**
+	 * 筛选区：只留文件名搜索。项目维度统一走顶栏的项目下拉
+	 * （ComponentUtil.getCurrentProject()），页面内不再重复放项目选择。
+	 */
 	private void initFilterLayout() {
 		HorizontalLayout layoutLeft = ComFactory.getResponsiveHorizontalLayoutLeft();
 		layoutLeft.setHeight("40px");
 		add(layoutLeft);
 
-		// TODO 查询当前用户下的项目并填充
-		Span nameLb = ComFactory.getLabel("项目名称：");
-		projectCom = ComFactory.getCombobox(Project.class);
 		Span nameLb2 = ComFactory.getLabel("文件名称：");
 		fileName = ComFactory.getTextField();
 		searchBtn = ComFactory.getPrimaryBtn("搜索");
-		layoutLeft.add(nameLb, projectCom, nameLb2, fileName, searchBtn);
+		layoutLeft.add(nameLb2, fileName, searchBtn);
 	}
 
 	private void initFileListTable() {
@@ -136,12 +131,11 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 	}
 
 	/**
-	 * 顶栏切换项目时被调用：重新加载文档列表与项目下拉。
+	 * 顶栏切换项目时被调用：重新加载文档列表。
 	 */
 	@Override
 	public void refresh() {
 		reloadFileList();
-		initContent();
 	}
 
 	/**
@@ -175,27 +169,15 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 		add(richTextEditor);
 	}
 
-	public void initContent() {
-		projectCom.setItemLabelGenerator(Project::getNameProject);
-		List<Project> projectList;
-		if (SecurityUtils.getSubject().isPermitted(UserManagementEnums.CHECKED_ALL_USER)) {
-			projectList = projectProcess.getProjectByCondition(new Project(), true);
-		} else {
-			projectList = projectProcess.getProjectByCondition(new Project(), false);
-		}
-		projectCom.setItems(projectList);
-		projectCom.setValue((Project) VaadinSession.getCurrent().getAttribute("project"));
-	}
-
 	public void registerHandler() {
-//		根据项目ID和文件名模糊搜索所有符合条件的数据
+//		根据当前项目 + 文件名模糊搜索
 		searchBtn.addClickListener(e -> {
-			if (null == projectCom.getValue()) {
-				ComFactory.notification("请先选择项目");
+			Project current = ComponentUtil.getCurrentProject();
+			if (null == current) {
+				ComFactory.notification("请先在顶部选择项目");
 				return;
 			}
-			String projectId = projectCom.getValue().getIdProject();
-			List<ProjectTaskFile> res = projectProcess.getProjectFileListByIdProject(projectId);
+			List<ProjectTaskFile> res = projectProcess.getProjectFileListByIdProject(current.getIdProject());
 			if (fileName.getValue() != null && StrUtil.isBlankIfStr(fileName.getValue())) {
 				List<ProjectTaskFile> collect = res.stream().filter(e1 -> e1.getNameFile().contains(fileName.getValue().toString())).collect(Collectors.toList());
 				docGrid.setItems(collect);
@@ -205,6 +187,8 @@ public class ProjectDocumentComponent extends VerticalLayout implements Componen
 				ComFactory.toggleEmptyHint(emptyHint, res.size());
 			}
 		});
+		// 文件名输入框回车直接搜索，不用非得点按钮
+		fileName.addKeyPressListener(Key.ENTER, e -> searchBtn.click());
 		// 点击显示文本框中的文件说明
 		docGrid.addItemClickListener(item -> {
 			Set<ProjectTaskFile> selectedItems = docGrid.getSelectedItems();

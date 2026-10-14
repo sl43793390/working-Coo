@@ -593,6 +593,59 @@ tr[role="row"] {
 .stat-fill-user {
 	background: #8f7ff0;
 }
+/* 工时维度配色（项目统计页用） */
+.stat-fill-hours-预估工时 {
+	background: #409eff;
+}
+.stat-fill-hours-实际工时 {
+	background: #67c23a;
+}
+/* 指标卡扩展配色（项目概况卡片区用） */
+.stat-card-purple {
+	border-left-color: #8f7ff0;
+}
+.stat-card-purple .stat-card-value {
+	color: #8f7ff0;
+}
+.stat-card-teal {
+	border-left-color: #0f9d58;
+}
+.stat-card-teal .stat-card-value {
+	color: #0f9d58;
+}
+.stat-card-cyan {
+	border-left-color: #14b8c4;
+}
+.stat-card-cyan .stat-card-value {
+	color: #14b8c4;
+}
+/* 完成率进度条 */
+.stat-progress-track {
+	width: 100%;
+	height: 16px;
+	background: #f2f4f8;
+	border-radius: 8px;
+	overflow: hidden;
+}
+.stat-progress-fill {
+	display: block;
+	height: 100%;
+	border-radius: 8px;
+	background: linear-gradient(90deg, #409eff, #67c23a);
+	transition: width 0.4s ease;
+}
+/* 统计页两列布局：状态/优先级并排。
+   组件 CSS 给所有横向布局设了 space-between + wrap，这里拉回从左排、不换行 */
+.stat-columns {
+	justify-content: flex-start;
+	flex-wrap: nowrap;
+	gap: 40px;
+	align-items: flex-start;
+}
+.stat-columns > * {
+	flex: 1;
+	min-width: 0;
+}
 
 
 /* ============================================================

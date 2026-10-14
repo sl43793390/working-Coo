@@ -567,6 +567,29 @@ public class Util {
 		return null == date ? null : Instant.ofEpochMilli(date.getTime());
 	}
 
+	/**
+	 * 把 Map 查询结果里的日期列统一收敛成 Date。
+	 * 根因：MyBatis 对无明确 resultType 映射的 Map 结果走 ObjectTypeHandler（底层
+	 * rs.getObject()），MySQL Connector/J 8.x 对 DATETIME/TIMESTAMP 列返回
+	 * LocalDateTime、对 DATE 列返回 java.sql.Date——直接 (Date) 强转 DATETIME
+	 * 列会抛 ClassCastException。这里兼容驱动可能返回的各种时间类型。
+	 */
+	public static Date asDate(Object o) {
+		if (null == o || o instanceof Date) {
+			return (Date) o;
+		}
+		if (o instanceof LocalDateTime ldt) {
+			return locaDateTimeToDate(ldt);
+		}
+		if (o instanceof LocalDate ld) {
+			return locaDateToDate(ld);
+		}
+		if (o instanceof Instant instant) {
+			return Date.from(instant);
+		}
+		throw new IllegalArgumentException("无法转换为 Date 的时间类型: " + o.getClass().getName());
+	}
+
 	public static LocalDate dateToLocalDate(Date date) {
 		ZoneId systemDefault = ZoneId.systemDefault();
 		LocalDate ofInstant = LocalDate.ofInstant(dateToInstant(date), systemDefault);

@@ -20,6 +20,7 @@ import com.sl.service.MilestoneService;
 import com.sl.service.NotificationService;
 import com.sl.service.ProjectProcess;
 import com.sl.service.ScheduleProcess;
+import com.sl.util.Util;
 
 /**
  * 通知调度器（T2-4）。
@@ -68,7 +69,7 @@ public class NotificationScheduler {
 				t.setIdProject(str(row.get("ID_PROJECT")));
 				t.setNameTask(str(row.get("NAME_TASK")));
 				t.setCdStatus(str(row.get("CD_STATUS")));
-				t.setDtEnd((Date) row.get("DT_END"));
+				t.setDtEnd(asDate(row.get("DT_END")));
 				String exeUser = str(row.get("ID_EXE_USER"));
 				if (null != exeUser && notificationService
 						.push(exeUser, com.sl.entity.Notification.TYPE_DUE, t.getIdTask(), t.getIdProject(),
@@ -151,6 +152,13 @@ public class NotificationScheduler {
 
 	private static String str(Object o) {
 		return null == o ? null : String.valueOf(o);
+	}
+
+	/**
+	 * 日期列转换统一走 {@link Util#asDate}，这里只是个短别名。
+	 */
+	private static Date asDate(Object o) {
+		return Util.asDate(o);
 	}
 
 	private static Date startOfTomorrow() {
