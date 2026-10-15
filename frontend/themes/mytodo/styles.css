@@ -288,27 +288,32 @@ tr[role="row"] {
 	box-shadow: 0 3px 10px rgba(16, 42, 83, 0.10);
 }
 
-/* 主题的 components/vaadin-horizontal-layout.css 给所有横向布局设了
-   justify-content: space-between + flex-wrap: wrap，会把头部元素扯散
-   （标题被推到最右、时间/删除被折行）。文档级类选择器优先于 shadow
-   内的 :host 规则，这里拉回「从左排列、不换行」。 */
+/* 卡片头部：普通 Div 手写 flex（不再是 vaadin-horizontal-layout）。
+   主题的 components/vaadin-*-layout.css 给所有布局组件强设
+   width:100% + space-between + wrap，连日三次把头部搞乱（标题挤成
+   竖排/挤没、右侧组顶不到边）。普通 Div 不在其打击范围内，这里的
+   规则就是最终布局，无级联对手。 */
 .schedule-card-header {
-	justify-content: flex-start;
+	display: flex;
 	flex-wrap: nowrap;
+	align-items: center;
+	gap: 10px;
+	/* 卡片是 VerticalLayout，子元素默认不拉伸；不撑满整行的话
+	   .schedule-card-side 的 margin-left:auto 没有弹性空间可吸收，
+	   删除按钮就会贴在时间 pill 后面而不是卡片最右侧 */
+	width: 100%;
+	box-sizing: border-box;
 }
 
-/* 头部右侧竖排（时间徽标 + 删除按钮）。
-   靠右不用占位元素 + flex-grow：主题给所有布局组件的 :host 设了
-   width:100%，spacer/右侧容器的宽度语义会被 theme 规则搅乱，顶不到
-   卡片右缘。flex 布局里 margin-left:auto 优先吸收全部弹性空间，
-   不受 justify-content 影响；width:auto 压掉 :host 的 width:100%。
-   双写类名提高优先级是双保险：即便某轮构建/缓存只带上了旧规则，
-   这条也能以 0,2,0 的特异性稳压主题的元素选择器。 */
-.schedule-card-side,
-.schedule-card-side.schedule-card-side {
-	width: auto;
-	flex: 0 0 auto;
+/* 头部右侧竖排（已过期徽标 + 删除按钮）：普通 Div，
+   margin-left:auto 吸收全部弹性空间，整组贴卡片右缘 */
+.schedule-card-side {
 	margin-left: auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
 }
 
 /* 头像固定尺寸，不参与压缩 */
@@ -316,37 +321,31 @@ tr[role="row"] {
 	flex-shrink: 0;
 }
 
+/* 标题：Java 侧已截断到 15 字，这里只保证不折行 */
 .schedule-card-title {
 	font-weight: 600;
 	font-size: 15px;
 	color: var(--lumo-body-text-color, #1f2937);
-	/* 空间不足时整段省略号收缩，绝不允许一字一列的竖排：
-	   CJK 文本宽度一旦被压到几个像素就会逐字折行，必须关掉折行 */
 	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	min-width: 0;
-}
-
-.schedule-card-time {
-	color: var(--lumo-secondary-text-color, #64748b);
-	font-size: 13px;
-	white-space: nowrap;
-	/* 时间是固定内容，头部空间再紧也不许被压缩 */
 	flex-shrink: 0;
 }
 
-/* 已过期（早于当前时间）的时间标红提醒 */
-.schedule-card-time-overdue {
-	color: #d14343;
+/* 时间 pill：浅绿底圆角，紧跟标题 */
+.schedule-card-time-pill {
+	background: #e5f5ec;
+	color: #1e7e50;
+	font-size: 12px;
+	padding: 2px 10px;
+	border-radius: 999px;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* 已过期的日程：时间 pill 整枚变红底红字作强调 */
+.schedule-card-time-pill-overdue {
+	background: #fde8e8;
+	color: #c22f2f;
 	font-weight: 600;
-}
-
-.schedule-card-time-icon {
-	width: 14px;
-	height: 14px;
-	color: #94a3b8;
-	flex-shrink: 0;
 }
 
 .schedule-card-comment {

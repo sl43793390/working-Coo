@@ -24,6 +24,7 @@ import org.vaadin.stefan.fullcalendar.FullCalendar;
 import org.vaadin.stefan.fullcalendar.dataprovider.EntryProvider;
 import org.vaadin.stefan.fullcalendar.dataprovider.InMemoryEntryProvider;
 
+import com.sl.app.component.editor.QuillEditor;
 import com.sl.app.component.util.ComFactory;
 import com.sl.app.component.util.ComponentUtil;
 import com.sl.app.component.util.Refreshable;
@@ -43,7 +44,6 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
@@ -417,7 +417,8 @@ public class ScheduleComponent extends VerticalLayout implements Refreshable {
 		time.addClassName("todo-time");
 		main.add(title, time);
 		if (StrUtil.isNotBlank(s.getComment())) {
-			String c = s.getComment();
+			// 描述已改存富文本 HTML，展示一律转纯文本
+			String c = QuillEditor.htmlToPlainText(s.getComment());
 			Span desc = new Span(c.length() > 60 ? c.substring(0, 60) + "…" : c);
 			desc.addClassName("todo-desc");
 			desc.setTitle(c);
@@ -472,7 +473,8 @@ public class ScheduleComponent extends VerticalLayout implements Refreshable {
 		}
 		e.setEditable(true);
 		if (StrUtil.isNotBlank(s.getComment())) {
-			e.setCustomProperties(Map.of("comment", s.getComment()));
+			// 悬停 title 不认 HTML，转纯文本
+			e.setCustomProperties(Map.of("comment", QuillEditor.htmlToPlainText(s.getComment())));
 		}
 		return e;
 	}
@@ -492,25 +494,37 @@ public class ScheduleComponent extends VerticalLayout implements Refreshable {
 		dialog.setCloseOnOutsideClick(false);
 
 		VerticalLayout body = new VerticalLayout();
-		body.setHeight("520px");
+		// 不写死高度：单列表单内容较高，固定 520px 会把字段压缩变形；
+		// 弹窗本身限定了 800px，超出部分由 Dialog 自己处理
 		body.setWidth("620px");
 
 		FormLayout form = new FormLayout();
+		// 强制单列：FormLayout 默认响应式步进在 680px 弹窗里会排成两列，
+		// 每个字段被压得很小。设为「任意宽度 1 列」，永远一列排布。
+		form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 		Checkbox allday = ComFactory.getCheckbox("全天");
 		DateTimePicker dtStart = new DateTimePicker("日程起始：");
 		DateTimePicker dtEnd = new DateTimePicker("日程结束：");
-		dtStart.setWidth("380px");
-		dtEnd.setWidth("380px");
 		TextField title = new TextField("日程标题：");
-		title.setWidth("380px");
-		TextArea area = new TextArea("日程描述：");
-		area.setWidth("380px");
-		area.setMaxLength(COMMENT_MAX_LENGTH);
+		// 描述换成项目通用 Quill 富文本编辑器（同任务备注 remark）。
+		// 工具栏用 basic：full 带图片，base64 一贴就撑爆 varchar(2000) 的 COMMENT 列。
+		// 存 HTML，展示处（卡片/待办清单/日历悬停）统一 htmlToPlainText。
+		Span descLabel = new Span("日程描述：");
+		// 与其他字段的 Lumo 小号标签观感保持一致（QuillEditor 没有 label 属性，自己补一行）
+		descLabel.getStyle().set("font-size", "var(--lumo-font-size-s, 13px)");
+		descLabel.getStyle().set("color", "var(--lumo-secondary-text-color, #6b7280)");
+		VerticalLayout descBox = new VerticalLayout();
+		descBox.setPadding(false);
+		descBox.setSpacing(false);
+		QuillEditor area = new QuillEditor().withToolbar("basic").withHeight("300px");
+		area.setWidthFull();
+		descBox.setWidthFull();
+		descBox.add(descLabel, area);
 		ComboBox<Integer> remindBox = ComFactory.getCombobox(Integer.class);
 		remindBox.setItems(0, 5, 10, 15, 30, 60, 120, 1440);
 		remindBox.setItemLabelGenerator(m -> 0 == m ? "不提醒" : (m >= 1440 ? "提前 1 天" : "提前 " + m + " 分钟"));
 		remindBox.setValue(0);
-		form.add(allday, dtStart, dtEnd, title, area, remindBox);
+		form.add(allday, dtStart, dtEnd, title, descBox, remindBox);
 		body.add(form);
 
 		// 全天 ↔ 时段 联动：勾「全天」时结束时间表示「结束日期（含）」，默认当天；
@@ -530,7 +544,6 @@ public class ScheduleComponent extends VerticalLayout implements Refreshable {
 		MultiSelectComboBox<User> userBox = ComFactory.getComboboxMultiSelect("参与人：", User.class);
 		userBox.setItemLabelGenerator(User::getUserName);
 		userBox.setItems(projectUsers);
-		userBox.setWidth("380px");
 		body.add(userBox);
 
 		if (edit) {
@@ -618,7 +631,13 @@ public class ScheduleComponent extends VerticalLayout implements Refreshable {
 				sc.setDtEnd(Util.locaDateTimeToDate(end));
 			}
 			sc.setNameSchedule(title.getValue());
-			sc.setComment(area.getValue());
+			// 富文本存 HTML。COMMENT 列是 varchar(2000)，超长会直接 SQL 报错，提前拦下；
+			// 空内容（空段落也算空）存 null，别留 <p><br></p> 这类垃圾标记
+			if (area.getValue().length() > COMMENT_MAX_LENGTH) {
+				ComFactory.notification("日程描述过长（含格式标记超过 " + COMMENT_MAX_LENGTH + " 字符），请精简后再保存");
+				return;
+			}
+			sc.setComment(area.isEmpty() ? null : area.getValue());
 			Integer remind = remindBox.getValue() == null ? 0 : remindBox.getValue();
 			sc.setNbrRemindMinutes(remind > 0 ? remind : null);
 			Set<User> users = userBox.getValue();
