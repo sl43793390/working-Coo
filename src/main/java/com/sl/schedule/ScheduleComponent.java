@@ -488,6 +488,7 @@ public class ScheduleComponent extends VerticalLayout implements Refreshable {
 		boolean edit = null != schedule;
 		dialog = new Dialog();
 		dialog.setWidth("680px");
+		dialog.setHeight("800px");
 		dialog.setCloseOnOutsideClick(false);
 
 		VerticalLayout body = new VerticalLayout();

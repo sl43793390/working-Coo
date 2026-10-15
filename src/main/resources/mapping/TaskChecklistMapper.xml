@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sl.mapper.TaskChecklistMapper" >
+
+  <resultMap id="BaseResultMap" type="com.sl.entity.TaskChecklistItem" >
+    <id column="ID_ITEM" property="idItem" jdbcType="VARCHAR" />
+    <result column="ID_PROJECT" property="idProject" jdbcType="VARCHAR" />
+    <result column="ID_TASK" property="idTask" jdbcType="VARCHAR" />
+    <result column="CD_CONTENT" property="cdContent" jdbcType="VARCHAR" />
+    <result column="FLAG_DONE" property="flagDone" jdbcType="CHAR" />
+    <result column="NBR_ORDER" property="nbrOrder" jdbcType="INTEGER" />
+    <result column="ID_USER" property="idUser" jdbcType="VARCHAR" />
+    <result column="DT_CREATE" property="dtCreate" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    ID_ITEM, ID_PROJECT, ID_TASK, CD_CONTENT, FLAG_DONE, NBR_ORDER, ID_USER, DT_CREATE
+  </sql>
+
+  <select id="selectByTask" resultMap="BaseResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />
+    from task_checklist_item
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+    order by NBR_ORDER, DT_CREATE
+  </select>
+
+  <insert id="insert" parameterType="com.sl.entity.TaskChecklistItem" >
+    insert into task_checklist_item (ID_ITEM, ID_PROJECT, ID_TASK, CD_CONTENT,
+      FLAG_DONE, NBR_ORDER, ID_USER, DT_CREATE)
+    values (#{idItem,jdbcType=VARCHAR}, #{idProject,jdbcType=VARCHAR}, #{idTask,jdbcType=VARCHAR},
+      #{cdContent,jdbcType=VARCHAR}, #{flagDone,jdbcType=CHAR}, #{nbrOrder,jdbcType=INTEGER},
+      #{idUser,jdbcType=VARCHAR}, #{dtCreate,jdbcType=TIMESTAMP})
+  </insert>
+
+  <update id="updateDone" parameterType="map" >
+    update task_checklist_item
+    set FLAG_DONE = #{flagDone,jdbcType=CHAR}
+    where ID_ITEM = #{idItem,jdbcType=VARCHAR}
+  </update>
+
+  <delete id="deleteByPrimaryKey" parameterType="map" >
+    delete from task_checklist_item
+    where ID_ITEM = #{idItem,jdbcType=VARCHAR}
+  </delete>
+
+  <delete id="deleteByTask" parameterType="map" >
+    delete from task_checklist_item
+    where ID_TASK = #{idTask,jdbcType=VARCHAR}
+  </delete>
+
+  <delete id="deleteByProject" parameterType="map" >
+    delete from task_checklist_item
+    where ID_PROJECT = #{idProject,jdbcType=VARCHAR}
+  </delete>
+
+</mapper>

@@ -251,6 +251,150 @@ tr[role="row"] {
 }
 
 /* ============================================================
+   页面长提示语（page-tip）
+   ComFactory.getLabel 是给表单「字段名：」短标签设计的
+   （固定 100px 宽 + 40px 高 + 居中），长句放进去会换行截断。
+   页面顶部的说明性长句统一用这个类：不限宽、次要色小字。
+   ============================================================ */
+.page-tip {
+	width: 100%;
+	margin: 2px 0 8px 0;
+	color: var(--lumo-secondary-text-color, #6b7280);
+	font-size: var(--lumo-font-size-s, 13px);
+	line-height: 1.6;
+}
+
+/* ============================================================
+   日程列表卡片（schedule-card）
+   旧实现是固定 170px 高的裸 VerticalLayout：标题/时间塞在
+   100px 居中短标签里（时间被折成两行），备注用只读 TextArea
+   带灰边框，观感零散。卡片化：白底圆角描边 + 悬浮投影，
+   头像/标题/时间/删除一行排布，备注渲染成引用块。
+   ============================================================ */
+.schedule-card {
+	width: 100%;
+	max-width: 1080px;
+	background: #fff;
+	border: 1px solid #e8ebf0;
+	border-radius: 10px;
+	padding: 14px 18px;
+	margin: 0 0 12px 0;
+	box-shadow: 0 1px 3px rgba(16, 42, 83, 0.05);
+	transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.schedule-card:hover {
+	border-color: #b9c8e8;
+	box-shadow: 0 3px 10px rgba(16, 42, 83, 0.10);
+}
+
+/* 主题的 components/vaadin-horizontal-layout.css 给所有横向布局设了
+   justify-content: space-between + flex-wrap: wrap，会把头部元素扯散
+   （标题被推到最右、时间/删除被折行）。文档级类选择器优先于 shadow
+   内的 :host 规则，这里拉回「从左排列、不换行」。 */
+.schedule-card-header {
+	justify-content: flex-start;
+	flex-wrap: nowrap;
+}
+
+/* 头部右侧竖排（时间徽标 + 删除按钮）。
+   靠右不用占位元素 + flex-grow：主题给所有布局组件的 :host 设了
+   width:100%，spacer/右侧容器的宽度语义会被 theme 规则搅乱，顶不到
+   卡片右缘。flex 布局里 margin-left:auto 优先吸收全部弹性空间，
+   不受 justify-content 影响；width:auto 压掉 :host 的 width:100%。
+   双写类名提高优先级是双保险：即便某轮构建/缓存只带上了旧规则，
+   这条也能以 0,2,0 的特异性稳压主题的元素选择器。 */
+.schedule-card-side,
+.schedule-card-side.schedule-card-side {
+	width: auto;
+	flex: 0 0 auto;
+	margin-left: auto;
+}
+
+/* 头像固定尺寸，不参与压缩 */
+.schedule-card-header vaadin-avatar {
+	flex-shrink: 0;
+}
+
+.schedule-card-title {
+	font-weight: 600;
+	font-size: 15px;
+	color: var(--lumo-body-text-color, #1f2937);
+	/* 空间不足时整段省略号收缩，绝不允许一字一列的竖排：
+	   CJK 文本宽度一旦被压到几个像素就会逐字折行，必须关掉折行 */
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+
+.schedule-card-time {
+	color: var(--lumo-secondary-text-color, #64748b);
+	font-size: 13px;
+	white-space: nowrap;
+	/* 时间是固定内容，头部空间再紧也不许被压缩 */
+	flex-shrink: 0;
+}
+
+/* 已过期（早于当前时间）的时间标红提醒 */
+.schedule-card-time-overdue {
+	color: #d14343;
+	font-weight: 600;
+}
+
+.schedule-card-time-icon {
+	width: 14px;
+	height: 14px;
+	color: #94a3b8;
+	flex-shrink: 0;
+}
+
+.schedule-card-comment {
+	width: 100%;
+	/* content-box 下 width:100% 会把 padding/边框叠加到容器宽度之外，溢出卡片 */
+	box-sizing: border-box;
+	margin-top: 10px;
+	padding: 8px 12px;
+	background: #f7f9fc;
+	border-left: 3px solid #cdd9ec;
+	border-radius: 0 6px 6px 0;
+	color: #475569;
+	font-size: 13px;
+	line-height: 1.6;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* 已过期徽标：显示在删除按钮上方 */
+.schedule-card-overdue-badge {
+	background: #fde8e8;
+	color: #c22f2f;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 1px 10px;
+	border-radius: 10px;
+	line-height: 1.5;
+}
+
+/* ============================================================
+   tertiary 行内按钮悬浮反馈增强（btn-tertiary-action）
+   Lumo tertiary 默认 hover 只有 5% 对比度浅灰，肉眼几乎察觉不到。
+   普通 tertiary：悬浮时浅蓝底 + 主题色文字加深；
+   error 变体（删除等）：悬浮时浅红底 + 红色文字加深。
+   ============================================================ */
+.btn-tertiary-action:hover,
+.btn-tertiary-action:focus-visible {
+	background-color: var(--lumo-primary-color-10pct, #dceaff);
+	color: var(--lumo-primary-text-color, #0f5ad3);
+}
+
+.btn-tertiary-action[theme~="error"]:hover,
+.btn-tertiary-action[theme~="error"]:focus-visible {
+	background-color: var(--lumo-error-color-10pct, #ffe4e4);
+	color: var(--lumo-error-text-color, #c22f2f);
+}
+
+/* ============================================================
    窄屏适配：小屏时放宽固定宽度，避免横向溢出
    ============================================================ */
 @media (max-width: 1024px) {

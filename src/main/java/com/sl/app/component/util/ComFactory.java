@@ -190,16 +190,22 @@ public class ComFactory {
 	public static Button getTertriayBtn(String caption) {
 		Button btn = new Button(caption);
 		btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+		// 注意：不要挂 btn-tertiary-action。左侧菜单（AppLayoutAccordion/AppLayoutLeft）
+		// 用本重载生成菜单项，深蓝抽屉底色上悬浮增强的浅蓝底+蓝字会看不清（2026-10-15 踩坑）。
 		return btn;
 	}
-	
-	public static Button getTertriayBtn(String caption,VaadinIcon icon) {
-		Button btn = new Button(caption);
-		btn.setIcon(new Icon(icon));
-		btn.addClassName("vaadin-button-back");
-		btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-		return btn;
-	}
+
+    public static Button getTertriayBtn(String caption,VaadinIcon icon) {
+        Button btn = new Button(caption);
+        btn.setIcon(new Icon(icon));
+        // 不挂 vaadin-button-back：那是蓝底(#409EFF) 90px 宽的标准按钮样式，
+        // tertiary 的文字色深，蓝底叠深字看不清（全局搜索结果操作列踩坑，2026-10-15）。
+        // SMALL 让表格行内按钮更紧凑。
+        btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        // 悬浮反馈增强：Lumo tertiary 默认 hover 只有 5% 对比度浅灰，不易察觉
+        btn.addClassName("btn-tertiary-action");
+        return btn;
+    }
 	/**
 	 * 白底蓝字
 	 * @param caption
@@ -272,12 +278,23 @@ public class ComFactory {
 		return lb;
 	}
 	
-	public static Span getLabel(String text,String width) {
-		Span lb = new Span(text);
-		lb.setHeight("40px");
-		lb.setWidth(width);
-		lb.addClassName("lb-width-common");
-		return lb;
+    public static Span getLabel(String text,String width) {
+    	Span lb = new Span(text);
+    	lb.setHeight("40px");
+    	lb.setWidth(width);
+    	lb.addClassName("lb-width-common");
+    	return lb;
+    }
+
+	/**
+	 * 页面顶部的说明性长句（如回收站的保留期说明）。
+	 * 别用 getLabel 放长文本——那是表单短标签专用（固定 100px 宽 + 40px 高），
+	 * 长句会被换行截断；本方法不限宽、次要色小字，样式见 styles.css 的 .page-tip。
+	 */
+	public static Span getPageTip(String text) {
+		Span tip = new Span(text);
+		tip.addClassName("page-tip");
+		return tip;
 	}
 	
 	/* ==================================================================
